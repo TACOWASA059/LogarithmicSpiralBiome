@@ -8,7 +8,7 @@ import net.minecraft.world.level.biome.BiomeSource;
 
 public class SpiralBiomeSources {
     public static final ResourceLocation LOGARITHMIC_SPIRAL_ID =
-            new ResourceLocation(Logarithmicspiralbiome.MODID, "logarithmic_spiral");
+            ResourceLocation.fromNamespaceAndPath(Logarithmicspiralbiome.MODID, "logarithmic_spiral");
 
     public static final MapCodec<? extends BiomeSource> LOGARITHMIC_SPIRAL = SpiralBiomeSource.CODEC;
 

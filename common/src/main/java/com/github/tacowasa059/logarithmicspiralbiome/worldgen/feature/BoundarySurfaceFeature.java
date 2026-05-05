@@ -40,16 +40,16 @@ public class BoundarySurfaceFeature extends Feature<NoneFeatureConfiguration> {
 
     private static boolean replaceSurface(WorldGenLevel level, int blockX, int blockZ) {
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, blockX, blockZ) - 1;
-        if (surfaceY < level.getMinBuildHeight() || surfaceY >= level.getMaxBuildHeight()) {
+        if (surfaceY < level.getMinY() || surfaceY >= level.getMaxY()) {
             return false;
         }
 
         boolean placed = false;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        int minY = Math.max(level.getMinBuildHeight(), surfaceY - REPLACE_DEPTH + 1);
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, surfaceY + WALL_HEIGHT_ABOVE_SURFACE);
+        int minY = Math.max(level.getMinY(), surfaceY - REPLACE_DEPTH + 1);
+        int maxY = Math.min(level.getMaxY() - 1, surfaceY + WALL_HEIGHT_ABOVE_SURFACE);
         for (int y = minY; y <= maxY; y++) {
-            if (y < level.getMinBuildHeight()) {
+            if (y < level.getMinY()) {
                 break;
             }
 

@@ -8,7 +8,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 
 public class SpiralFeatures {
     public static final ResourceLocation BOUNDARY_SURFACE_ID =
-            new ResourceLocation(Logarithmicspiralbiome.MODID, "boundary_surface");
+            ResourceLocation.fromNamespaceAndPath(Logarithmicspiralbiome.MODID, "boundary_surface");
 
     public static final Feature<NoneFeatureConfiguration> BOUNDARY_SURFACE = new BoundarySurfaceFeature();
 

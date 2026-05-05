@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 25
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -29,12 +29,12 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build loader jars
-        run: ./gradlew :forge:build :fabric:build :neoforge:build
+        run: ./gradlew :fabric:build :neoforge:build
 
       - name: Collect release assets
         run: |
           mkdir -p release-assets
-          find forge/build/libs fabric/build/libs neoforge/build/libs \
+          find fabric/build/libs neoforge/build/libs \
             -maxdepth 1 \
             -type f \
             -name "*.jar" \

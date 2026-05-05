@@ -1,6 +1,6 @@
 # Logarithmic Spiral Biome
-![](src/main/resources/logarithmicspiralbiome.png)
-Minecraft Forge/Fabric 1.20.1 mod that generates Overworld biomes in a logarithmic spiral pattern.
+![](common/src/main/resources/logarithmicspiralbiome.png)
+Minecraft Forge/Fabric/NeoForge 1.20.6 mod that generates Overworld biomes in a logarithmic spiral pattern.
 
 ## Features
 

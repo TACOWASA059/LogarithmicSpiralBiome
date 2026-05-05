@@ -3,6 +3,7 @@ package com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome;
 import com.github.tacowasa059.logarithmicspiralbiome.registry.SpiralBiomeSources;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralMath;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class SpiralBiomeSource extends BiomeSource {
-    public static final Codec<SpiralBiomeSource> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+    public static final MapCodec<SpiralBiomeSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             RegistryCodecs.homogeneousList(Registries.BIOME).fieldOf("biomes").forGetter(source -> source.biomes),
             Biome.CODEC.fieldOf("boundary_biome").forGetter(source -> source.boundaryBiome)
     ).apply(instance, SpiralBiomeSource::new));
@@ -39,7 +40,7 @@ public class SpiralBiomeSource extends BiomeSource {
     }
 
     @Override
-    protected Codec<? extends BiomeSource> codec() {
+    protected MapCodec<? extends BiomeSource> codec() {
         return SpiralBiomeSources.LOGARITHMIC_SPIRAL;
     }
 

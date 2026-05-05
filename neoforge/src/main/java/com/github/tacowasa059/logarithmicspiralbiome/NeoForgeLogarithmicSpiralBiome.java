@@ -6,26 +6,23 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 @Mod(Logarithmicspiralbiome.MODID)
-public class ForgeLogarithmicSpiralBiome {
+public class NeoForgeLogarithmicSpiralBiome {
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
             DeferredRegister.create(BuiltInRegistries.BIOME_SOURCE.key(), Logarithmicspiralbiome.MODID);
 
     private static final DeferredRegister<Feature<?>> FEATURES =
-            DeferredRegister.create(ForgeRegistries.FEATURES, Logarithmicspiralbiome.MODID);
+            DeferredRegister.create(BuiltInRegistries.FEATURE.key(), Logarithmicspiralbiome.MODID);
 
-    public ForgeLogarithmicSpiralBiome() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public NeoForgeLogarithmicSpiralBiome(IEventBus eventBus) {
         BIOME_SOURCES.register("logarithmic_spiral", () -> SpiralBiomeSources.LOGARITHMIC_SPIRAL);
         FEATURES.register("boundary_surface", () -> SpiralFeatures.BOUNDARY_SURFACE);
-        BIOME_SOURCES.register(modEventBus);
-        FEATURES.register(modEventBus);
+        BIOME_SOURCES.register(eventBus);
+        FEATURES.register(eventBus);
         Logarithmicspiralbiome.init();
     }
 }

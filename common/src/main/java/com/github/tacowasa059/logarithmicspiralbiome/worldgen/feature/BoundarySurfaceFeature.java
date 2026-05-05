@@ -24,7 +24,7 @@ public class BoundarySurfaceFeature extends Feature<NoneFeatureConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel level = context.level();
-        ChunkPos chunkPos = new ChunkPos(context.origin());
+        ChunkPos chunkPos = new ChunkPos(context.origin().getX() >> 4, context.origin().getZ() >> 4);
         boolean placed = false;
         for (int localZ = 0; localZ < 16; localZ++) {
             int blockZ = chunkPos.getMinBlockZ() + localZ;

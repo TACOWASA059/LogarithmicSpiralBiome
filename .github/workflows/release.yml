@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build loader jars
+        run: ./gradlew :forge:build :fabric:build
+
+      - name: Collect release assets
+        run: |
+          mkdir -p release-assets
+          find forge/build/libs fabric/build/libs \
+            -maxdepth 1 \
+            -type f \
+            -name "*.jar" \
+            ! -name "*-sources.jar" \
+            ! -name "*-javadoc.jar" \
+            -exec cp {} release-assets/ \;
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v3
+        with:
+          files: release-assets/*.jar
+          generate_release_notes: true

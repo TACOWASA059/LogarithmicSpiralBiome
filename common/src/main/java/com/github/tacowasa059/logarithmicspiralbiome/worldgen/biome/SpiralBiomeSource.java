@@ -65,7 +65,7 @@ public class SpiralBiomeSource extends BiomeSource {
 
     private static String sortKey(Holder<Biome> biome) {
         return biome.unwrapKey()
-                .map(key -> key.location().toString())
+                .map(key -> key.identifier().toString())
                 .orElse("");
     }
 }

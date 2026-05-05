@@ -6,7 +6,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -21,11 +21,11 @@ public class ForgeLogarithmicSpiralBiome {
             DeferredRegister.create(ForgeRegistries.FEATURES, Logarithmicspiralbiome.MODID);
 
     public ForgeLogarithmicSpiralBiome() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        BusGroup modBusGroup = FMLJavaModLoadingContext.get().getModBusGroup();
         BIOME_SOURCES.register("logarithmic_spiral", () -> SpiralBiomeSources.LOGARITHMIC_SPIRAL);
         FEATURES.register("boundary_surface", () -> SpiralFeatures.BOUNDARY_SURFACE);
-        BIOME_SOURCES.register(modEventBus);
-        FEATURES.register(modEventBus);
+        BIOME_SOURCES.register(modBusGroup);
+        FEATURES.register(modBusGroup);
         Logarithmicspiralbiome.init();
     }
 }

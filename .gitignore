@@ -1,6 +1,8 @@
 .gradle/
+.gradle-user/
 .idea/
 .vscode/
+_tmp_*/
 build/
 run/
 run-data/

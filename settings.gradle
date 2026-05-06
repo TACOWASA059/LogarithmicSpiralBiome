@@ -25,6 +25,10 @@ pluginManagement {
                 includeGroup("codechicken")
             }
         }
+        maven {
+            name = 'MinecraftForge'
+            url = uri("https://maven.minecraftforge.net/")
+        }
         exclusiveContent {
             forRepository {
                 maven {
@@ -46,4 +50,5 @@ plugins {
 rootProject.name = 'logarithmicspiralbiome'
 include("common")
 include("fabric")
+include("forge")
 include("neoforge")

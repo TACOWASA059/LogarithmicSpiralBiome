@@ -2,11 +2,13 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.github.tacowasa059.logarithmicspiralbiome.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "refmap": "logarithmicspiralbiome.refmap.json",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [],
   "client": [],
   "injectors": {
     "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
   }
 }

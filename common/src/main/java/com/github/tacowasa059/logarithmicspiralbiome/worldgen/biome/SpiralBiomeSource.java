@@ -8,9 +8,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
-import net.minecraft.core.RegistryCodecs;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeResolver;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 
@@ -18,9 +17,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class SpiralBiomeSource extends BiomeSource {
+public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
     public static final MapCodec<SpiralBiomeSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            RegistryCodecs.homogeneousList(Registries.BIOME).fieldOf("biomes").forGetter(source -> source.biomes),
+            Biome.LIST_CODEC.fieldOf("biomes").forGetter(source -> source.biomes),
             Biome.CODEC.fieldOf("boundary_biome").forGetter(source -> source.boundaryBiome)
     ).apply(instance, SpiralBiomeSource::new));
 
@@ -50,7 +49,12 @@ public class SpiralBiomeSource extends BiomeSource {
     }
 
     @Override
-    public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
+    public BiomeResolver createResolver(Climate.Sampler sampler) {
+        return this;
+    }
+
+    @Override
+    public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ) {
         if (sortedBiomes.isEmpty()) {
             throw new IllegalStateException("Spiral biome source requires at least one biome");
         }

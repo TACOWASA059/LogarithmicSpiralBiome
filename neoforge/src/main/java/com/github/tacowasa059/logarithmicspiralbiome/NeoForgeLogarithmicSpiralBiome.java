@@ -15,8 +15,8 @@ public class NeoForgeLogarithmicSpiralBiome {
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES =
             DeferredRegister.create(BuiltInRegistries.BIOME_SOURCE.key(), Logarithmicspiralbiome.MODID);
 
-    private static final DeferredRegister<Feature<?>> FEATURES =
-            DeferredRegister.create(BuiltInRegistries.FEATURE.key(), Logarithmicspiralbiome.MODID);
+    private static final DeferredRegister<MapCodec<? extends Feature>> FEATURES =
+            DeferredRegister.create(BuiltInRegistries.FEATURE_TYPE.key(), Logarithmicspiralbiome.MODID);
 
     public NeoForgeLogarithmicSpiralBiome(IEventBus eventBus) {
         BIOME_SOURCES.register("logarithmic_spiral", () -> SpiralBiomeSources.LOGARITHMIC_SPIRAL);

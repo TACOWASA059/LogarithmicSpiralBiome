@@ -1,30 +1,33 @@
 package com.github.tacowasa059.logarithmicspiralbiome.worldgen.feature;
 
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralMath;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
-public class BoundarySurfaceFeature extends Feature<NoneFeatureConfiguration> {
+public record BoundarySurfaceFeature() implements Feature {
+    public static final MapCodec<BoundarySurfaceFeature> CODEC = MapCodec.unit(BoundarySurfaceFeature::new);
+
     private static final double BOUNDARY_HALF_WIDTH_BLOCKS = 0.5D;
     private static final int REPLACE_DEPTH = 3;
     private static final int WALL_HEIGHT_ABOVE_SURFACE = 3;
     private static final BlockState BOUNDARY_STATE = Blocks.STONE.defaultBlockState();
 
-    public BoundarySurfaceFeature() {
-        super(NoneFeatureConfiguration.CODEC);
+    @Override
+    public MapCodec<BoundarySurfaceFeature> codec() {
+        return CODEC;
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        WorldGenLevel level = context.level();
-        ChunkPos chunkPos = new ChunkPos(context.origin().getX() >> 4, context.origin().getZ() >> 4);
+    public boolean place(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin) {
+        ChunkPos chunkPos = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
         boolean placed = false;
         for (int localZ = 0; localZ < 16; localZ++) {
             int blockZ = chunkPos.getMinBlockZ() + localZ;

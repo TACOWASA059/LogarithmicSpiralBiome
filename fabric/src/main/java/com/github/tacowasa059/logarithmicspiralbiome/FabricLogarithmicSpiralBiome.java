@@ -10,7 +10,7 @@ public class FabricLogarithmicSpiralBiome implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(BuiltInRegistries.BIOME_SOURCE, SpiralBiomeSources.LOGARITHMIC_SPIRAL_ID, SpiralBiomeSources.LOGARITHMIC_SPIRAL);
-        Registry.register(BuiltInRegistries.FEATURE, SpiralFeatures.BOUNDARY_SURFACE_ID, SpiralFeatures.BOUNDARY_SURFACE);
+        Registry.register(BuiltInRegistries.FEATURE_TYPE, SpiralFeatures.BOUNDARY_SURFACE_ID, SpiralFeatures.BOUNDARY_SURFACE);
         Logarithmicspiralbiome.init();
     }
 }

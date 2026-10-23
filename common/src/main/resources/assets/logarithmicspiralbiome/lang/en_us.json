@@ -1,8 +1,5 @@
 {
-  "generator.logarithmicspiralbiome.logarithmic_spiral": "Logarithmic Spiral (Standard)",
-  "generator.logarithmicspiralbiome.logarithmic_spiral_large": "Logarithmic Spiral (Large)",
-  "generator.logarithmicspiralbiome.logarithmic_spiral_dense": "Logarithmic Spiral (Dense)",
-  "generator.logarithmicspiralbiome.logarithmic_spiral_tight": "Logarithmic Spiral (Tight)",
+  "generator.logarithmicspiralbiome.logarithmic_spiral": "Logarithmic Spiral",
   "biome_source.logarithmicspiralbiome.logarithmic_spiral": "Logarithmic Spiral",
   "biome.logarithmicspiralbiome.spiral_boundary": "Spiral Boundary",
   "biome.logarithmicspiralbiome.spiral_boundary_nether": "Spiral Boundary (Nether)",

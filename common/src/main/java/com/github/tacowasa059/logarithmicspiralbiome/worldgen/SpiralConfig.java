@@ -18,7 +18,7 @@ public record SpiralConfig(
     public static final double DEFAULT_GROWTH = 0.32D;
     public static final double DEFAULT_SPIRAL_REGION_WIDTH = Math.PI / 8.0D;
     public static final double DEFAULT_CROSS_REGION_WIDTH = Math.PI / 5.0D;
-    public static final double DEFAULT_BOUNDARY_HALF_WIDTH = 0.5D;
+    public static final double DEFAULT_BOUNDARY_HALF_WIDTH = 0.0D;
     public static final int DEFAULT_CENTER_X = 0;
     public static final int DEFAULT_CENTER_Z = 0;
     public static final double DEFAULT_MIN_RADIUS = 16.0D;

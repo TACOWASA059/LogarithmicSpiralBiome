@@ -1,9 +1,6 @@
 {
   "replace": false,
   "values": [
-    "logarithmicspiralbiome:logarithmic_spiral",
-    "logarithmicspiralbiome:logarithmic_spiral_large",
-    "logarithmicspiralbiome:logarithmic_spiral_dense",
-    "logarithmicspiralbiome:logarithmic_spiral_tight"
+    "logarithmicspiralbiome:logarithmic_spiral"
   ]
 }

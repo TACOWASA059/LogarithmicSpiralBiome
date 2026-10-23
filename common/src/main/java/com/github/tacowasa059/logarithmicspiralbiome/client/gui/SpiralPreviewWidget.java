@@ -36,6 +36,7 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
         SpiralCalculator calculator = new SpiralCalculator(config);
         int half = PREVIEW_SIZE / 2;
         int blockStep = 4;
+        int dividerColor = (config.dividerType() != null) ? config.dividerType().getPreviewColor() : 0xFFFFFFFF;
 
         for (int py = 0; py < PREVIEW_SIZE; py++) {
             int blockZ = (py - half) * blockStep;
@@ -44,7 +45,7 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
 
                 int color;
                 if (dividerEnabled && calculator.isBoundary(blockX, blockZ)) {
-                    color = 0xFFFFFFFF; // 境界線は白
+                    color = dividerColor;
                 } else {
                     int region = calculator.regionIndex(blockX, blockZ, PALETTE.length);
                     color = PALETTE[Math.floorMod(region, PALETTE.length)];

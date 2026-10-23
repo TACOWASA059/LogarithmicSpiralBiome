@@ -2,6 +2,7 @@ package com.github.tacowasa059.logarithmicspiralbiome.config;
 
 import com.github.tacowasa059.logarithmicspiralbiome.client.gui.SpiralPresetStyle;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.feature.DividerBlockType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -19,6 +20,8 @@ public class SpiralModConfig {
     private static boolean enableOverworld = true;
     private static boolean enableNether = true;
     private static boolean dividerBlocks = false;
+    private static int wallHeight = SpiralConfig.DEFAULT_WALL_HEIGHT;
+    private static DividerBlockType dividerType = SpiralConfig.DEFAULT_DIVIDER_TYPE;
     private static SpiralPresetStyle style = SpiralPresetStyle.STANDARD;
 
     private static double scale = SpiralConfig.DEFAULT_SCALE;
@@ -42,6 +45,12 @@ public class SpiralModConfig {
             }
             if (json.has("divider_blocks")) {
                 dividerBlocks = json.get("divider_blocks").getAsBoolean();
+            }
+            if (json.has("wall_height")) {
+                wallHeight = json.get("wall_height").getAsInt();
+            }
+            if (json.has("divider_type")) {
+                dividerType = DividerBlockType.byKey(json.get("divider_type").getAsString());
             }
             if (json.has("style")) {
                 String styleStr = json.get("style").getAsString();
@@ -96,12 +105,14 @@ public class SpiralModConfig {
             json.addProperty("enable_overworld", enableOverworld);
             json.addProperty("enable_nether", enableNether);
             json.addProperty("divider_blocks", dividerBlocks);
+            json.addProperty("wall_height", wallHeight);
+            json.addProperty("divider_type", dividerType.getKey());
             json.addProperty("style", style.name().toLowerCase());
             json.addProperty("scale", scale);
             json.addProperty("growth", growth);
             json.addProperty("spiral_region_width", spiralRegionWidth);
             json.addProperty("cross_region_width", crossRegionWidth);
-            json.addProperty("description", "enable_overworld / enable_nether: true/false. style: standard, large, dense, tight, custom. Parameters: scale, growth, spiral_region_width, cross_region_width, divider_blocks.");
+            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. divider_type: stone, stone_bricks, deepslate, glass, obsidian, quartz, sea_lantern. style: standard, large, dense, tight, custom.");
 
             try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
                 GSON.toJson(json, writer);
@@ -121,7 +132,9 @@ public class SpiralModConfig {
                 boundaryHalfWidth,
                 0,
                 0,
-                SpiralConfig.DEFAULT_MIN_RADIUS
+                SpiralConfig.DEFAULT_MIN_RADIUS,
+                wallHeight,
+                dividerType
         );
     }
 
@@ -135,6 +148,14 @@ public class SpiralModConfig {
 
     public static boolean isDividerBlocks() {
         return dividerBlocks;
+    }
+
+    public static int getWallHeight() {
+        return wallHeight;
+    }
+
+    public static DividerBlockType getDividerType() {
+        return dividerType;
     }
 
     public static SpiralPresetStyle getStyle() {

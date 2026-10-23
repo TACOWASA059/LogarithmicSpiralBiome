@@ -3,6 +3,7 @@ package com.github.tacowasa059.logarithmicspiralbiome.client.gui;
 import com.github.tacowasa059.logarithmicspiralbiome.config.SpiralModConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome.SpiralBiomeSource;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.feature.DividerBlockType;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
@@ -34,12 +35,17 @@ public class SpiralPresetConfigScreen extends Screen {
     private boolean enableNether;
     private SpiralPresetStyle currentStyle;
     private boolean dividerEnabled;
+    private DividerBlockType currentDividerType;
+    private int currentWallHeight;
     private double currentScale;
     private double currentGrowth;
 
     private CycleButton<SpiralPresetStyle> styleButton;
     private DoubleSlider scaleSlider;
     private DoubleSlider growthSlider;
+    private CycleButton<Boolean> dividerButton;
+    private CycleButton<DividerBlockType> dividerTypeButton;
+    private CycleButton<Integer> wallHeightButton;
     private SpiralPreviewWidget previewWidget;
 
     public SpiralPresetConfigScreen(CreateWorldScreen parent, WorldCreationContext context) {
@@ -52,6 +58,8 @@ public class SpiralPresetConfigScreen extends Screen {
         this.enableNether = SpiralModConfig.isEnableNether();
         this.currentStyle = SpiralModConfig.getStyle();
         this.dividerEnabled = SpiralModConfig.isDividerBlocks();
+        this.currentDividerType = SpiralModConfig.getDividerType();
+        this.currentWallHeight = SpiralModConfig.getWallHeight();
         this.currentScale = SpiralModConfig.getScale();
         this.currentGrowth = SpiralModConfig.getGrowth();
 
@@ -62,6 +70,8 @@ public class SpiralPresetConfigScreen extends Screen {
                 this.currentScale = config.scale();
                 this.currentGrowth = config.growth();
                 this.dividerEnabled = config.boundaryHalfWidth() > 0.0D;
+                this.currentDividerType = config.dividerType();
+                this.currentWallHeight = config.wallHeight();
                 this.currentStyle = SpiralPresetStyle.fromConfig(config);
             }
         }
@@ -72,16 +82,16 @@ public class SpiralPresetConfigScreen extends Screen {
         super.init();
 
         int centerX = this.width / 2;
-        int totalWidth = 330;
+        int totalWidth = 340;
         int leftX = centerX - totalWidth / 2;
         int controlsWidth = 180;
-        int previewX = leftX + controlsWidth + 18;
-        int startY = Math.max(30, this.height / 6);
+        int previewX = leftX + controlsWidth + 16;
+        int startY = Math.max(26, this.height / 6 - 8);
 
         // タイトル
         this.addRenderableWidget(new StringWidget(
                 centerX - 120,
-                startY - 22,
+                startY - 20,
                 240,
                 20,
                 this.title,
@@ -89,7 +99,7 @@ public class SpiralPresetConfigScreen extends Screen {
         ));
 
         // --- 左ペイン: コントロール ---
-        int rowH = 24;
+        int rowH = 22;
 
         // 行1: ディメンション適用切り替え (オーバーワールド / ネザー)
         int dimBtnW = (controlsWidth - 4) / 2;
@@ -173,7 +183,7 @@ public class SpiralPresetConfigScreen extends Screen {
         ));
 
         // 行5: 仕切りブロック (ON / OFF)
-        this.addRenderableWidget(CycleButton.onOffBuilder(this.dividerEnabled)
+        this.dividerButton = this.addRenderableWidget(CycleButton.onOffBuilder(this.dividerEnabled)
                 .create(
                         leftX,
                         startY + rowH * 4,
@@ -182,14 +192,50 @@ public class SpiralPresetConfigScreen extends Screen {
                         Component.translatable("createWorld.customize.logarithmic_spiral.divider"),
                         (button, value) -> {
                             this.dividerEnabled = value;
+                            if (this.dividerTypeButton != null) this.dividerTypeButton.active = value;
+                            if (this.wallHeightButton != null) this.wallHeightButton.active = value;
                             this.refreshPreview();
                         }
                 ));
 
+        // 行6: 仕切りブロックの種類
+        this.dividerTypeButton = this.addRenderableWidget(CycleButton.builder(DividerBlockType::displayName, this.currentDividerType)
+                .withValues(DividerBlockType.values())
+                .create(
+                        leftX,
+                        startY + rowH * 5,
+                        controlsWidth,
+                        20,
+                        Component.translatable("createWorld.customize.logarithmic_spiral.divider_type"),
+                        (button, value) -> {
+                            this.currentDividerType = value;
+                            this.refreshPreview();
+                        }
+                ));
+        this.dividerTypeButton.active = this.dividerEnabled;
+
+        // 行7: 壁の高さ (0: 敷石, 1〜5)
+        this.wallHeightButton = this.addRenderableWidget(CycleButton.<Integer>builder(
+                        val -> val == 0
+                                ? Component.translatable("createWorld.customize.logarithmic_spiral.wall_height.flat")
+                                : Component.literal(String.valueOf(val)),
+                        this.currentWallHeight)
+                .withValues(0, 1, 2, 3, 4, 5)
+                .create(
+                        leftX,
+                        startY + rowH * 6,
+                        controlsWidth,
+                        20,
+                        Component.translatable("createWorld.customize.logarithmic_spiral.wall_height"),
+                        (button, value) -> this.currentWallHeight = value
+                ));
+        this.wallHeightButton.active = this.dividerEnabled;
+
         // --- 右ペイン: リアルタイムマッププレビュー ---
+        int previewY = startY + 12;
         this.addRenderableWidget(new StringWidget(
                 previewX,
-                startY,
+                previewY - 14,
                 128,
                 12,
                 Component.translatable("createWorld.customize.logarithmic_spiral.preview_header"),
@@ -201,13 +247,13 @@ public class SpiralPresetConfigScreen extends Screen {
         }
         this.previewWidget = this.addRenderableWidget(new SpiralPreviewWidget(
                 previewX,
-                startY + 16,
+                previewY,
                 128
         ));
 
         this.addRenderableWidget(new StringWidget(
                 previewX,
-                startY + 148,
+                previewY + 132,
                 128,
                 12,
                 Component.translatable("createWorld.customize.logarithmic_spiral.preview_footer"),
@@ -252,7 +298,9 @@ public class SpiralPresetConfigScreen extends Screen {
                 boundaryHalfWidth,
                 0,
                 0,
-                SpiralConfig.DEFAULT_MIN_RADIUS
+                SpiralConfig.DEFAULT_MIN_RADIUS,
+                this.currentWallHeight,
+                this.currentDividerType
         );
     }
 
@@ -260,14 +308,14 @@ public class SpiralPresetConfigScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         // Modern UI の背景カード（左右のパネルを覆う洗練されたダークグラス風カード）
         int centerX = this.width / 2;
-        int totalWidth = 350;
+        int totalWidth = 356;
         int cardX = centerX - totalWidth / 2;
-        int startY = Math.max(30, this.height / 6);
-        int cardH = 175;
+        int startY = Math.max(26, this.height / 6 - 8);
+        int cardH = 172;
 
         // 背景カードの角丸調シャドウと半透明ダークグラデーション
-        graphics.fill(cardX - 1, startY - 10, cardX + totalWidth + 1, startY + cardH + 1, 0x33FFFFFF);
-        graphics.fill(cardX, startY - 9, cardX + totalWidth, startY + cardH, 0xCC10141A);
+        graphics.fill(cardX - 1, startY - 8, cardX + totalWidth + 1, startY + cardH + 1, 0x33FFFFFF);
+        graphics.fill(cardX, startY - 7, cardX + totalWidth, startY + cardH, 0xCC10141A);
 
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }

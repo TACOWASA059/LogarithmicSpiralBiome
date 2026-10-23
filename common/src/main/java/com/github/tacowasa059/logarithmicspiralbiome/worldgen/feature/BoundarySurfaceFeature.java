@@ -17,9 +17,6 @@ public record BoundarySurfaceFeature() implements Feature {
 
     private static final double BOUNDARY_HALF_WIDTH_BLOCKS = 0.5D;
     private static final int REPLACE_DEPTH = 3;
-    private static final int WALL_HEIGHT_ABOVE_SURFACE = 3;
-    private static final BlockState OVERWORLD_BOUNDARY_STATE = Blocks.STONE.defaultBlockState();
-    private static final BlockState NETHER_BOUNDARY_STATE = Blocks.BLACKSTONE.defaultBlockState();
 
     @Override
     public MapCodec<BoundarySurfaceFeature> codec() {
@@ -32,8 +29,12 @@ public record BoundarySurfaceFeature() implements Feature {
             return false;
         }
 
-        ChunkPos chunkPos = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
+        com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig config = spiralSource.getConfig();
         boolean isNether = level.dimensionType().hasCeiling();
+        BlockState boundaryState = isNether ? config.dividerType().getNetherState() : config.dividerType().getOverworldState();
+        int wallHeight = Math.max(0, config.wallHeight());
+
+        ChunkPos chunkPos = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
         boolean placed = false;
         for (int localZ = 0; localZ < 16; localZ++) {
             int blockZ = chunkPos.getMinBlockZ() + localZ;
@@ -41,15 +42,15 @@ public record BoundarySurfaceFeature() implements Feature {
                 int blockX = chunkPos.getMinBlockX() + localX;
                 if (spiralSource.isBoundary(blockX, blockZ)) {
                     placed |= isNether
-                            ? replaceSurfaceNether(level, blockX, blockZ)
-                            : replaceSurfaceOverworld(level, blockX, blockZ);
+                            ? replaceSurfaceNether(level, blockX, blockZ, boundaryState, wallHeight)
+                            : replaceSurfaceOverworld(level, blockX, blockZ, boundaryState, wallHeight);
                 }
             }
         }
         return placed;
     }
 
-    private static boolean replaceSurfaceOverworld(WorldGenLevel level, int blockX, int blockZ) {
+    private static boolean replaceSurfaceOverworld(WorldGenLevel level, int blockX, int blockZ, BlockState boundaryState, int wallHeight) {
         int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, blockX, blockZ) - 1;
         if (surfaceY < level.getMinY() || surfaceY >= level.getMaxY()) {
             return false;
@@ -58,7 +59,7 @@ public record BoundarySurfaceFeature() implements Feature {
         boolean placed = false;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         int minY = Math.max(level.getMinY(), surfaceY - REPLACE_DEPTH + 1);
-        int maxY = Math.min(level.getMaxY() - 1, surfaceY + WALL_HEIGHT_ABOVE_SURFACE);
+        int maxY = Math.min(level.getMaxY() - 1, surfaceY + wallHeight);
         for (int y = minY; y <= maxY; y++) {
             if (y < level.getMinY()) {
                 break;
@@ -70,13 +71,13 @@ public record BoundarySurfaceFeature() implements Feature {
                 continue;
             }
 
-            level.setBlock(pos, OVERWORLD_BOUNDARY_STATE, 2);
+            level.setBlock(pos, boundaryState, 2);
             placed = true;
         }
         return placed;
     }
 
-    private static boolean replaceSurfaceNether(WorldGenLevel level, int blockX, int blockZ) {
+    private static boolean replaceSurfaceNether(WorldGenLevel level, int blockX, int blockZ, BlockState boundaryState, int wallHeight) {
         boolean placed = false;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         int topY = Math.min(120, level.getMaxY() - 8);
@@ -93,7 +94,7 @@ public record BoundarySurfaceFeature() implements Feature {
                 if (above.isAir() || above.is(Blocks.FIRE) || above.is(Blocks.SOUL_FIRE)) {
                     int surfaceY = y;
                     int minY = Math.max(level.getMinY(), surfaceY - REPLACE_DEPTH + 1);
-                    int maxY = Math.min(level.getMaxY() - 1, surfaceY + WALL_HEIGHT_ABOVE_SURFACE);
+                    int maxY = Math.min(level.getMaxY() - 1, surfaceY + wallHeight);
 
                     for (int wallY = minY; wallY <= maxY; wallY++) {
                         pos.set(blockX, wallY, blockZ);
@@ -104,7 +105,7 @@ public record BoundarySurfaceFeature() implements Feature {
                         if (wallY <= surfaceY && existing.isAir()) {
                             continue;
                         }
-                        level.setBlock(pos, NETHER_BOUNDARY_STATE, 2);
+                        level.setBlock(pos, boundaryState, 2);
                         placed = true;
                     }
                     y -= REPLACE_DEPTH;

@@ -1,6 +1,7 @@
 plugins {
     id 'multiloader-loader'
     id 'net.minecraftforge.gradle'
+    id 'multiloader-publish'
 }
 
 base {

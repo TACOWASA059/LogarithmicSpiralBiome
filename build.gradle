@@ -3,3 +3,32 @@ plugins {
     id 'net.minecraftforge.gradle' version '7.0.20' apply false
     id 'net.neoforged.moddev' version '2.0.147' apply false
 }
+
+def publishLoaderProjects = ['fabric', 'neoforge', 'forge']
+        .collect { findProject(":${it}") }
+        .findAll { it != null }
+
+tasks.register('publishMods') {
+    group = 'publishing'
+    description = 'Uploads every loader jar to Modrinth and CurseForge.'
+    dependsOn publishLoaderProjects.collect { "${it.path}:modrinth" } +
+              publishLoaderProjects.collect { "${it.path}:publishCurseForge" }
+}
+
+tasks.register('publishModrinth') {
+    group = 'publishing'
+    description = 'Uploads every loader jar to Modrinth.'
+    dependsOn publishLoaderProjects.collect { "${it.path}:modrinth" }
+}
+
+tasks.register('publishCurseForge') {
+    group = 'publishing'
+    description = 'Uploads every loader jar to CurseForge.'
+    dependsOn publishLoaderProjects.collect { "${it.path}:publishCurseForge" }
+}
+
+tasks.register('publishInfo') {
+    group = 'publishing'
+    description = 'Prints publishing details for all loader jars without uploading.'
+    dependsOn publishLoaderProjects.collect { "${it.path}:publishInfo" }
+}

@@ -3,5 +3,12 @@
   "biome_source.logarithmicspiralbiome.logarithmic_spiral": "Logarithmic Spiral",
   "biome.logarithmicspiralbiome.spiral_boundary": "Spiral Boundary",
   "biome.logarithmicspiralbiome.spiral_boundary_nether": "Spiral Boundary (Nether)",
-  "mod.logarithmicspiralbiome.name": "Logarithmic Spiral Biome"
+  "mod.logarithmicspiralbiome.name": "Logarithmic Spiral Biome",
+  "createWorld.customize.logarithmic_spiral.title": "Customize Logarithmic Spiral",
+  "createWorld.customize.logarithmic_spiral.style": "Spiral Style",
+  "createWorld.customize.logarithmic_spiral.style.standard": "Standard",
+  "createWorld.customize.logarithmic_spiral.style.large": "Large",
+  "createWorld.customize.logarithmic_spiral.style.dense": "Dense",
+  "createWorld.customize.logarithmic_spiral.style.tight": "Tight",
+  "createWorld.customize.logarithmic_spiral.divider": "Divider Blocks"
 }

@@ -6,6 +6,7 @@
         "type": "minecraft:noise",
         "biome_source": {
           "type": "logarithmicspiralbiome:logarithmic_spiral",
+          "boundary_biome": "logarithmicspiralbiome:spiral_boundary",
           "biomes": "#logarithmicspiralbiome:overworld_biomes"
         },
         "settings": "minecraft:overworld"
@@ -17,6 +18,7 @@
         "type": "minecraft:noise",
         "biome_source": {
           "type": "logarithmicspiralbiome:logarithmic_spiral",
+          "boundary_biome": "logarithmicspiralbiome:spiral_boundary_nether",
           "biomes": "#logarithmicspiralbiome:nether_biomes"
         },
         "settings": "minecraft:nether"

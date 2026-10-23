@@ -28,8 +28,25 @@ public record BoundarySurfaceFeature() implements Feature {
 
     @Override
     public boolean place(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin) {
-        // 仕切りブロックの配置は景観保護のため無効化
-        return false;
+        if (!(chunkGenerator.getBiomeSource() instanceof com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome.SpiralBiomeSource spiralSource)) {
+            return false;
+        }
+
+        ChunkPos chunkPos = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
+        boolean isNether = level.dimensionType().hasCeiling();
+        boolean placed = false;
+        for (int localZ = 0; localZ < 16; localZ++) {
+            int blockZ = chunkPos.getMinBlockZ() + localZ;
+            for (int localX = 0; localX < 16; localX++) {
+                int blockX = chunkPos.getMinBlockX() + localX;
+                if (spiralSource.isBoundary(blockX, blockZ)) {
+                    placed |= isNether
+                            ? replaceSurfaceNether(level, blockX, blockZ)
+                            : replaceSurfaceOverworld(level, blockX, blockZ);
+                }
+            }
+        }
+        return placed;
     }
 
     private static boolean replaceSurfaceOverworld(WorldGenLevel level, int blockX, int blockZ) {

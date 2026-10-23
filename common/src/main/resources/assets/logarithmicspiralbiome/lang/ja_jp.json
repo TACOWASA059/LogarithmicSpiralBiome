@@ -3,5 +3,12 @@
   "biome_source.logarithmicspiralbiome.logarithmic_spiral": "対数螺旋",
   "biome.logarithmicspiralbiome.spiral_boundary": "螺旋境界",
   "biome.logarithmicspiralbiome.spiral_boundary_nether": "螺旋境界（ネザー）",
-  "mod.logarithmicspiralbiome.name": "対数螺旋バイオーム"
+  "mod.logarithmicspiralbiome.name": "対数螺旋バイオーム",
+  "createWorld.customize.logarithmic_spiral.title": "対数螺旋の設定",
+  "createWorld.customize.logarithmic_spiral.style": "螺旋タイプ",
+  "createWorld.customize.logarithmic_spiral.style.standard": "標準",
+  "createWorld.customize.logarithmic_spiral.style.large": "広大",
+  "createWorld.customize.logarithmic_spiral.style.dense": "高密度",
+  "createWorld.customize.logarithmic_spiral.style.tight": "急旋回",
+  "createWorld.customize.logarithmic_spiral.divider": "仕切りブロック"
 }

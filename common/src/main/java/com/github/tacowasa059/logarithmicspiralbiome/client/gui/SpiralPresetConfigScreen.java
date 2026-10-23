@@ -3,6 +3,7 @@ package com.github.tacowasa059.logarithmicspiralbiome.client.gui;
 import com.github.tacowasa059.logarithmicspiralbiome.config.SpiralModConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome.SpiralBiomeSource;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.StringWidget;
@@ -22,15 +23,10 @@ import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SpiralPresetConfigScreen extends Screen {
-    private static final List<Double> SCALE_OPTIONS = Arrays.asList(1.0D, 1.5D, 2.0D, 3.0D, 4.0D, 6.0D, 8.0D, 10.0D, 16.0D);
-    private static final List<Double> GROWTH_OPTIONS = Arrays.asList(0.12D, 0.18D, 0.25D, 0.32D, 0.40D, 0.50D, 0.65D);
-
     private final CreateWorldScreen parent;
     private final WorldCreationContext context;
 
@@ -42,8 +38,9 @@ public class SpiralPresetConfigScreen extends Screen {
     private double currentGrowth;
 
     private CycleButton<SpiralPresetStyle> styleButton;
-    private CycleButton<Double> scaleButton;
-    private CycleButton<Double> growthButton;
+    private DoubleSlider scaleSlider;
+    private DoubleSlider growthSlider;
+    private SpiralPreviewWidget previewWidget;
 
     public SpiralPresetConfigScreen(CreateWorldScreen parent, WorldCreationContext context) {
         super(Component.translatable("createWorld.customize.logarithmic_spiral.title"));
@@ -75,28 +72,32 @@ public class SpiralPresetConfigScreen extends Screen {
         super.init();
 
         int centerX = this.width / 2;
-        int leftCol = centerX - 155;
-        int rightCol = centerX + 5;
-        int colWidth = 150;
-        int rowHeight = 24;
-        int startY = this.height / 5;
+        int totalWidth = 330;
+        int leftX = centerX - totalWidth / 2;
+        int controlsWidth = 180;
+        int previewX = leftX + controlsWidth + 18;
+        int startY = Math.max(30, this.height / 6);
 
         // タイトル
         this.addRenderableWidget(new StringWidget(
-                centerX - 100,
-                startY - 25,
-                200,
+                centerX - 120,
+                startY - 22,
+                240,
                 20,
                 this.title,
                 this.font
         ));
 
-        // 行1: オーバーワールド適用 / ネザー適用
+        // --- 左ペイン: コントロール ---
+        int rowH = 24;
+
+        // 行1: ディメンション適用切り替え (オーバーワールド / ネザー)
+        int dimBtnW = (controlsWidth - 4) / 2;
         this.addRenderableWidget(CycleButton.onOffBuilder(this.enableOverworld)
                 .create(
-                        leftCol,
+                        leftX,
                         startY,
-                        colWidth,
+                        dimBtnW,
                         20,
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_overworld"),
                         (button, value) -> this.enableOverworld = value
@@ -104,112 +105,146 @@ public class SpiralPresetConfigScreen extends Screen {
 
         this.addRenderableWidget(CycleButton.onOffBuilder(this.enableNether)
                 .create(
-                        rightCol,
+                        leftX + dimBtnW + 4,
                         startY,
-                        colWidth,
+                        dimBtnW,
                         20,
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_nether"),
                         (button, value) -> this.enableNether = value
                 ));
 
-        // 行2: 螺旋タイプ / 仕切りブロック
+        // 行2: 螺旋タイプ（プリセット）
         this.styleButton = this.addRenderableWidget(CycleButton.builder(SpiralPresetStyle::displayName, this.currentStyle)
                 .withValues(SpiralPresetStyle.values())
                 .create(
-                        leftCol,
-                        startY + rowHeight,
-                        colWidth,
+                        leftX,
+                        startY + rowH,
+                        controlsWidth,
                         20,
                         Component.translatable("createWorld.customize.logarithmic_spiral.style"),
                         (button, value) -> {
                             this.currentStyle = value;
                             if (value != SpiralPresetStyle.CUSTOM) {
-                                this.currentScale = findClosest(SCALE_OPTIONS, value.scale());
-                                this.currentGrowth = findClosest(GROWTH_OPTIONS, value.growth());
-                                if (this.scaleButton != null) this.scaleButton.setValue(this.currentScale);
-                                if (this.growthButton != null) this.growthButton.setValue(this.currentGrowth);
+                                this.currentScale = value.scale();
+                                this.currentGrowth = value.growth();
+                                if (this.scaleSlider != null) this.scaleSlider.setActualValue(this.currentScale);
+                                if (this.growthSlider != null) this.growthSlider.setActualValue(this.currentGrowth);
                             }
+                            this.refreshPreview();
                         }
                 ));
 
+        // 行3: スケールスライダー (Scale: 0.5 〜 16.0, step: 0.1)
+        this.scaleSlider = this.addRenderableWidget(new DoubleSlider(
+                leftX,
+                startY + rowH * 2,
+                controlsWidth,
+                20,
+                Component.translatable("createWorld.customize.logarithmic_spiral.scale"),
+                0.5D,
+                16.0D,
+                0.1D,
+                this.currentScale,
+                "%.1f",
+                val -> {
+                    this.currentScale = val;
+                    this.markCustom();
+                    this.refreshPreview();
+                }
+        ));
+
+        // 行4: 成長率スライダー (Growth: 0.10 〜 0.70, step: 0.01)
+        this.growthSlider = this.addRenderableWidget(new DoubleSlider(
+                leftX,
+                startY + rowH * 3,
+                controlsWidth,
+                20,
+                Component.translatable("createWorld.customize.logarithmic_spiral.growth"),
+                0.10D,
+                0.70D,
+                0.01D,
+                this.currentGrowth,
+                "%.2f",
+                val -> {
+                    this.currentGrowth = val;
+                    this.markCustom();
+                    this.refreshPreview();
+                }
+        ));
+
+        // 行5: 仕切りブロック (ON / OFF)
         this.addRenderableWidget(CycleButton.onOffBuilder(this.dividerEnabled)
                 .create(
-                        rightCol,
-                        startY + rowHeight,
-                        colWidth,
+                        leftX,
+                        startY + rowH * 4,
+                        controlsWidth,
                         20,
                         Component.translatable("createWorld.customize.logarithmic_spiral.divider"),
-                        (button, value) -> this.dividerEnabled = value
-                ));
-
-        // 行3: スケール直接設定 / 成長率直接設定
-        Double initialScale = findClosest(SCALE_OPTIONS, this.currentScale);
-        Double initialGrowth = findClosest(GROWTH_OPTIONS, this.currentGrowth);
-
-        this.scaleButton = this.addRenderableWidget(CycleButton.<Double>builder(val -> Component.literal(String.format("%.1f", val)), initialScale)
-                .withValues(SCALE_OPTIONS)
-                .create(
-                        leftCol,
-                        startY + rowHeight * 2,
-                        colWidth,
-                        20,
-                        Component.translatable("createWorld.customize.logarithmic_spiral.scale"),
                         (button, value) -> {
-                            this.currentScale = value;
-                            this.currentStyle = SpiralPresetStyle.CUSTOM;
-                            if (this.styleButton != null) this.styleButton.setValue(SpiralPresetStyle.CUSTOM);
+                            this.dividerEnabled = value;
+                            this.refreshPreview();
                         }
                 ));
 
-        this.growthButton = this.addRenderableWidget(CycleButton.<Double>builder(val -> Component.literal(String.format("%.2f", val)), initialGrowth)
-                .withValues(GROWTH_OPTIONS)
-                .create(
-                        rightCol,
-                        startY + rowHeight * 2,
-                        colWidth,
-                        20,
-                        Component.translatable("createWorld.customize.logarithmic_spiral.growth"),
-                        (button, value) -> {
-                            this.currentGrowth = value;
-                            this.currentStyle = SpiralPresetStyle.CUSTOM;
-                            if (this.styleButton != null) this.styleButton.setValue(SpiralPresetStyle.CUSTOM);
-                        }
-                ));
+        // --- 右ペイン: リアルタイムマッププレビュー ---
+        this.addRenderableWidget(new StringWidget(
+                previewX,
+                startY,
+                128,
+                12,
+                Component.translatable("createWorld.customize.logarithmic_spiral.preview_header"),
+                this.font
+        ));
 
-        // 完了ボタン
+        if (this.previewWidget != null) {
+            this.previewWidget.close();
+        }
+        this.previewWidget = this.addRenderableWidget(new SpiralPreviewWidget(
+                previewX,
+                startY + 16,
+                128
+        ));
+
+        this.addRenderableWidget(new StringWidget(
+                previewX,
+                startY + 148,
+                128,
+                12,
+                Component.translatable("createWorld.customize.logarithmic_spiral.preview_footer"),
+                this.font
+        ));
+
+        // --- 下部: 完了 / キャンセル ---
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.applyAndClose())
                 .bounds(centerX - 155, this.height - 28, 150, 20)
                 .build());
 
-        // キャンセルボタン
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> this.onClose())
                 .bounds(centerX + 5, this.height - 28, 150, 20)
                 .build());
+
+        // 初回プレビュー描画
+        this.refreshPreview();
     }
 
-    private static Double findClosest(List<Double> options, double target) {
-        Double best = options.get(0);
-        double minDiff = Math.abs(best - target);
-        for (Double opt : options) {
-            double diff = Math.abs(opt - target);
-            if (diff < minDiff) {
-                minDiff = diff;
-                best = opt;
+    private void markCustom() {
+        if (this.currentStyle != SpiralPresetStyle.CUSTOM) {
+            this.currentStyle = SpiralPresetStyle.CUSTOM;
+            if (this.styleButton != null) {
+                this.styleButton.setValue(SpiralPresetStyle.CUSTOM);
             }
         }
-        return best;
     }
 
-    @Override
-    public void onClose() {
-        if (this.minecraft != null) {
-            this.minecraft.gui.setScreen(this.parent);
+    private void refreshPreview() {
+        if (this.previewWidget != null) {
+            this.previewWidget.updatePreview(this.getCurrentConfig(), this.dividerEnabled);
         }
     }
 
-    private void applyAndClose() {
+    private SpiralConfig getCurrentConfig() {
         double boundaryHalfWidth = this.dividerEnabled ? 0.5D : 0.0D;
-        SpiralConfig newConfig = new SpiralConfig(
+        return new SpiralConfig(
                 this.currentScale,
                 this.currentGrowth,
                 this.currentStyle.spiralRegionWidth(),
@@ -219,6 +254,37 @@ public class SpiralPresetConfigScreen extends Screen {
                 0,
                 SpiralConfig.DEFAULT_MIN_RADIUS
         );
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        // Modern UI の背景カード（左右のパネルを覆う洗練されたダークグラス風カード）
+        int centerX = this.width / 2;
+        int totalWidth = 350;
+        int cardX = centerX - totalWidth / 2;
+        int startY = Math.max(30, this.height / 6);
+        int cardH = 175;
+
+        // 背景カードの角丸調シャドウと半透明ダークグラデーション
+        graphics.fill(cardX - 1, startY - 10, cardX + totalWidth + 1, startY + cardH + 1, 0x33FFFFFF);
+        graphics.fill(cardX, startY - 9, cardX + totalWidth, startY + cardH, 0xCC10141A);
+
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public void onClose() {
+        if (this.previewWidget != null) {
+            this.previewWidget.close();
+            this.previewWidget = null;
+        }
+        if (this.minecraft != null) {
+            this.minecraft.gui.setScreen(this.parent);
+        }
+    }
+
+    private void applyAndClose() {
+        SpiralConfig newConfig = this.getCurrentConfig();
 
         WorldCreationContext.DimensionsUpdater updater = (registryAccess, worldDimensions) -> {
             Map<ResourceKey<LevelStem>, LevelStem> newDimensions = new LinkedHashMap<>(worldDimensions.dimensions());

@@ -4,9 +4,9 @@
   "biome.logarithmicspiralbiome.spiral_boundary": "螺旋境界",
   "biome.logarithmicspiralbiome.spiral_boundary_nether": "螺旋境界（ネザー）",
   "mod.logarithmicspiralbiome.name": "対数螺旋バイオーム",
-  "createWorld.customize.logarithmic_spiral.title": "対数螺旋の設定",
-  "createWorld.customize.logarithmic_spiral.enable_overworld": "オーバーワールド適用",
-  "createWorld.customize.logarithmic_spiral.enable_nether": "ネザー適用",
+  "createWorld.customize.logarithmic_spiral.title": "対数螺旋のカスタマイズ",
+  "createWorld.customize.logarithmic_spiral.enable_overworld": "オーバーワールド",
+  "createWorld.customize.logarithmic_spiral.enable_nether": "ネザー",
   "createWorld.customize.logarithmic_spiral.style": "螺旋タイプ",
   "createWorld.customize.logarithmic_spiral.style.standard": "標準",
   "createWorld.customize.logarithmic_spiral.style.large": "広大",
@@ -15,5 +15,9 @@
   "createWorld.customize.logarithmic_spiral.style.custom": "カスタム",
   "createWorld.customize.logarithmic_spiral.scale": "スケール",
   "createWorld.customize.logarithmic_spiral.growth": "成長率",
-  "createWorld.customize.logarithmic_spiral.divider": "仕切りブロック"
+  "createWorld.customize.logarithmic_spiral.divider": "仕切りブロック",
+  "createWorld.customize.logarithmic_spiral.preview": "螺旋プレビュー",
+  "createWorld.customize.logarithmic_spiral.preview_header": "リアルタイム配置",
+  "createWorld.customize.logarithmic_spiral.preview_footer": "中心: (0, 0)",
+  "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s"
 }

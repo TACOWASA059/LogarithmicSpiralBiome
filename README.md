@@ -2,7 +2,7 @@
 
 ![Banner](https://cdn.modrinth.com/data/cached_images/c4b27e5d4c4d295a53250d207a73c9dceb291a30_0.webp)
 
-A Minecraft mod for **Fabric** and **NeoForge** (and Forge) that generates Overworld and Nether biomes in a mathematical logarithmic spiral pattern.
+A Minecraft mod for **Fabric** and **NeoForge** that generates Overworld and Nether biomes in a mathematical logarithmic spiral pattern.
 
 ---
 
@@ -81,7 +81,7 @@ Server-side generation parameters and divider block settings can be customized i
 ## Supported Versions
 
 - **Minecraft**: 26.3+ (also available for 1.20.1, 1.20.4, 1.20.6, 1.21.1, 1.21.4, 1.21.11, 26.1)
-- **Mod Loaders**: Fabric, NeoForge, Forge
+- **Mod Loaders**: Fabric, NeoForge
 
 ---
 

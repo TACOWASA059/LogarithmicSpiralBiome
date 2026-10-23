@@ -1,8 +1,8 @@
 package com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome;
 
 import com.github.tacowasa059.logarithmicspiralbiome.registry.SpiralBiomeSources;
-import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralMath;
-import com.mojang.serialization.Codec;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralCalculator;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
@@ -21,23 +21,46 @@ import java.util.stream.Stream;
 
 public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
     public static final MapCodec<SpiralBiomeSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Biome.LIST_CODEC.fieldOf("biomes").forGetter(source -> source.biomes),
-            Biome.CODEC.fieldOf("boundary_biome").forGetter(source -> source.boundaryBiome)
+            Biome.LIST_CODEC.fieldOf("biomes").forGetter(SpiralBiomeSource::getBiomes),
+            Biome.CODEC.fieldOf("boundary_biome").forGetter(SpiralBiomeSource::getBoundaryBiome),
+            SpiralConfig.MAP_CODEC.forGetter(SpiralBiomeSource::getConfig)
     ).apply(instance, SpiralBiomeSource::new));
-
-    private static final double BOUNDARY_HALF_WIDTH_BLOCKS = 0.5D;
 
     private final HolderSet<Biome> biomes;
     private final Holder<Biome> boundaryBiome;
+    private final SpiralConfig config;
+    private final SpiralCalculator calculator;
     private final Supplier<List<Holder<Biome>>> sortedBiomes;
 
-    public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome) {
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome, SpiralConfig config) {
         this.biomes = biomes;
         this.boundaryBiome = boundaryBiome;
+        this.config = config != null ? config : SpiralConfig.DEFAULT;
+        this.calculator = new SpiralCalculator(this.config);
         this.sortedBiomes = Suppliers.memoize(() -> biomes.stream()
                 .filter(biome -> !biome.equals(boundaryBiome))
                 .sorted(Comparator.comparing(SpiralBiomeSource::sortKey))
                 .toList());
+    }
+
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome) {
+        this(biomes, boundaryBiome, SpiralConfig.DEFAULT);
+    }
+
+    public HolderSet<Biome> getBiomes() {
+        return this.biomes;
+    }
+
+    public Holder<Biome> getBoundaryBiome() {
+        return this.boundaryBiome;
+    }
+
+    public SpiralConfig getConfig() {
+        return this.config;
+    }
+
+    public boolean isBoundary(int blockX, int blockZ) {
+        return this.calculator.isBoundary(blockX, blockZ);
     }
 
     @Override
@@ -64,10 +87,10 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
 
         int blockX = QuartPos.toBlock(quartX);
         int blockZ = QuartPos.toBlock(quartZ);
-        if (SpiralMath.isBoundary(blockX, blockZ, BOUNDARY_HALF_WIDTH_BLOCKS)) {
+        if (this.calculator.isBoundary(blockX, blockZ)) {
             return boundaryBiome;
         }
-        return biomesList.get(SpiralMath.regionIndex(blockX, blockZ, biomesList.size()));
+        return biomesList.get(this.calculator.regionIndex(blockX, blockZ, biomesList.size()));
     }
 
     private static String sortKey(Holder<Biome> biome) {

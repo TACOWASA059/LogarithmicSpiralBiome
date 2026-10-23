@@ -30,12 +30,17 @@ public record BoundarySurfaceFeature() implements Feature {
     public boolean place(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin) {
         ChunkPos chunkPos = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);
         boolean isNether = level.dimensionType().hasCeiling();
+        com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome.SpiralBiomeSource spiralSource =
+                chunkGenerator.getBiomeSource() instanceof com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome.SpiralBiomeSource s ? s : null;
         boolean placed = false;
         for (int localZ = 0; localZ < 16; localZ++) {
             int blockZ = chunkPos.getMinBlockZ() + localZ;
             for (int localX = 0; localX < 16; localX++) {
                 int blockX = chunkPos.getMinBlockX() + localX;
-                if (SpiralMath.isBoundary(blockX, blockZ, BOUNDARY_HALF_WIDTH_BLOCKS)) {
+                boolean isBoundary = spiralSource != null
+                        ? spiralSource.isBoundary(blockX, blockZ)
+                        : SpiralMath.isBoundary(blockX, blockZ, BOUNDARY_HALF_WIDTH_BLOCKS);
+                if (isBoundary) {
                     placed |= isNether
                             ? replaceSurfaceNether(level, blockX, blockZ)
                             : replaceSurfaceOverworld(level, blockX, blockZ);

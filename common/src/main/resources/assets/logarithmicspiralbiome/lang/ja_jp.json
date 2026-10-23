@@ -1,5 +1,8 @@
 {
-  "generator.logarithmicspiralbiome.logarithmic_spiral": "対数螺旋",
+  "generator.logarithmicspiralbiome.logarithmic_spiral": "対数螺旋（標準）",
+  "generator.logarithmicspiralbiome.logarithmic_spiral_large": "対数螺旋（広大）",
+  "generator.logarithmicspiralbiome.logarithmic_spiral_dense": "対数螺旋（高密度）",
+  "generator.logarithmicspiralbiome.logarithmic_spiral_tight": "対数螺旋（急旋回）",
   "biome_source.logarithmicspiralbiome.logarithmic_spiral": "対数螺旋",
   "biome.logarithmicspiralbiome.spiral_boundary": "螺旋境界",
   "biome.logarithmicspiralbiome.spiral_boundary_nether": "螺旋境界（ネザー）",

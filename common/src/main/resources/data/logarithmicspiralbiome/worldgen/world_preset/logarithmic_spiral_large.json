@@ -1,0 +1,42 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "minecraft:overworld",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "logarithmicspiralbiome:logarithmic_spiral",
+          "boundary_biome": "logarithmicspiralbiome:spiral_boundary",
+          "biomes": "#logarithmicspiralbiome:overworld_biomes",
+          "scale": 6.0,
+          "growth": 0.35
+        },
+        "settings": "minecraft:overworld"
+      }
+    },
+    "minecraft:the_nether": {
+      "type": "minecraft:the_nether",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "logarithmicspiralbiome:logarithmic_spiral",
+          "boundary_biome": "logarithmicspiralbiome:spiral_boundary_nether",
+          "biomes": "#logarithmicspiralbiome:nether_biomes",
+          "scale": 6.0,
+          "growth": 0.35
+        },
+        "settings": "minecraft:nether"
+      }
+    },
+    "minecraft:the_end": {
+      "type": "minecraft:the_end",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": {
+          "type": "minecraft:the_end"
+        },
+        "settings": "minecraft:end"
+      }
+    }
+  }
+}

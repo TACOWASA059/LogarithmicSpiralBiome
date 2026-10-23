@@ -31,7 +31,7 @@ public record BoundarySurfaceFeature() implements Feature {
 
         com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig config = spiralSource.getConfig();
         boolean isNether = level.dimensionType().hasCeiling();
-        BlockState boundaryState = isNether ? config.dividerType().getNetherState() : config.dividerType().getOverworldState();
+        BlockState boundaryState = isNether ? config.getNetherBlock().defaultBlockState() : config.getOverworldBlock().defaultBlockState();
         int wallHeight = Math.max(0, config.wallHeight());
 
         ChunkPos chunkPos = new ChunkPos(origin.getX() >> 4, origin.getZ() >> 4);

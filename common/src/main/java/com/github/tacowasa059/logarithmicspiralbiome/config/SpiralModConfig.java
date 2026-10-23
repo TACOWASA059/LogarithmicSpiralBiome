@@ -21,7 +21,8 @@ public class SpiralModConfig {
     private static boolean enableNether = true;
     private static boolean dividerBlocks = false;
     private static int wallHeight = SpiralConfig.DEFAULT_WALL_HEIGHT;
-    private static DividerBlockType dividerType = SpiralConfig.DEFAULT_DIVIDER_TYPE;
+    private static String overworldDividerBlock = SpiralConfig.DEFAULT_OVERWORLD_DIVIDER_BLOCK;
+    private static String netherDividerBlock = SpiralConfig.DEFAULT_NETHER_DIVIDER_BLOCK;
     private static SpiralPresetStyle style = SpiralPresetStyle.STANDARD;
 
     private static double scale = SpiralConfig.DEFAULT_SCALE;
@@ -49,8 +50,16 @@ public class SpiralModConfig {
             if (json.has("wall_height")) {
                 wallHeight = json.get("wall_height").getAsInt();
             }
-            if (json.has("divider_type")) {
-                dividerType = DividerBlockType.byKey(json.get("divider_type").getAsString());
+            if (json.has("overworld_divider_block")) {
+                overworldDividerBlock = json.get("overworld_divider_block").getAsString();
+            }
+            if (json.has("nether_divider_block")) {
+                netherDividerBlock = json.get("nether_divider_block").getAsString();
+            }
+            if (json.has("divider_type") && !json.has("overworld_divider_block")) {
+                DividerBlockType type = DividerBlockType.byKey(json.get("divider_type").getAsString());
+                overworldDividerBlock = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(type.getOverworldState().getBlock()).toString();
+                netherDividerBlock = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(type.getNetherState().getBlock()).toString();
             }
             if (json.has("style")) {
                 String styleStr = json.get("style").getAsString();
@@ -106,13 +115,14 @@ public class SpiralModConfig {
             json.addProperty("enable_nether", enableNether);
             json.addProperty("divider_blocks", dividerBlocks);
             json.addProperty("wall_height", wallHeight);
-            json.addProperty("divider_type", dividerType.getKey());
+            json.addProperty("overworld_divider_block", overworldDividerBlock);
+            json.addProperty("nether_divider_block", netherDividerBlock);
             json.addProperty("style", style.name().toLowerCase());
             json.addProperty("scale", scale);
             json.addProperty("growth", growth);
             json.addProperty("spiral_region_width", spiralRegionWidth);
             json.addProperty("cross_region_width", crossRegionWidth);
-            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. divider_type: stone, stone_bricks, deepslate, glass, obsidian, quartz, sea_lantern. style: standard, large, dense, tight, custom.");
+            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. overworld_divider_block / nether_divider_block: any block ID (e.g. minecraft:stone, minecraft:sea_lantern, etc). style: standard, large, dense, tight, custom.");
 
             try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
                 GSON.toJson(json, writer);
@@ -134,7 +144,8 @@ public class SpiralModConfig {
                 0,
                 SpiralConfig.DEFAULT_MIN_RADIUS,
                 wallHeight,
-                dividerType
+                overworldDividerBlock,
+                netherDividerBlock
         );
     }
 
@@ -154,8 +165,16 @@ public class SpiralModConfig {
         return wallHeight;
     }
 
+    public static String getOverworldDividerBlock() {
+        return overworldDividerBlock;
+    }
+
+    public static String getNetherDividerBlock() {
+        return netherDividerBlock;
+    }
+
     public static DividerBlockType getDividerType() {
-        return dividerType;
+        return DividerBlockType.STONE;
     }
 
     public static SpiralPresetStyle getStyle() {

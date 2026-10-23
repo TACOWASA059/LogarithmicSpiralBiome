@@ -3,7 +3,6 @@ package com.github.tacowasa059.logarithmicspiralbiome.client.gui;
 import com.github.tacowasa059.logarithmicspiralbiome.config.SpiralModConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome.SpiralBiomeSource;
-import com.github.tacowasa059.logarithmicspiralbiome.worldgen.feature.DividerBlockType;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
@@ -13,6 +12,7 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationContext;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -20,6 +20,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.WorldDimensions;
@@ -35,7 +37,8 @@ public class SpiralPresetConfigScreen extends Screen {
     private boolean enableNether;
     private SpiralPresetStyle currentStyle;
     private boolean dividerEnabled;
-    private DividerBlockType currentDividerType;
+    private Block overworldBlock;
+    private Block netherBlock;
     private int currentWallHeight;
     private double currentScale;
     private double currentGrowth;
@@ -44,7 +47,8 @@ public class SpiralPresetConfigScreen extends Screen {
     private DoubleSlider scaleSlider;
     private DoubleSlider growthSlider;
     private CycleButton<Boolean> dividerButton;
-    private CycleButton<DividerBlockType> dividerTypeButton;
+    private Button overworldBlockButton;
+    private Button netherBlockButton;
     private CycleButton<Integer> wallHeightButton;
     private SpiralPreviewWidget previewWidget;
 
@@ -58,7 +62,8 @@ public class SpiralPresetConfigScreen extends Screen {
         this.enableNether = SpiralModConfig.isEnableNether();
         this.currentStyle = SpiralModConfig.getStyle();
         this.dividerEnabled = SpiralModConfig.isDividerBlocks();
-        this.currentDividerType = SpiralModConfig.getDividerType();
+        this.overworldBlock = SpiralConfig.resolveBlock(SpiralModConfig.getOverworldDividerBlock(), Blocks.STONE);
+        this.netherBlock = SpiralConfig.resolveBlock(SpiralModConfig.getNetherDividerBlock(), Blocks.BLACKSTONE);
         this.currentWallHeight = SpiralModConfig.getWallHeight();
         this.currentScale = SpiralModConfig.getScale();
         this.currentGrowth = SpiralModConfig.getGrowth();
@@ -70,7 +75,8 @@ public class SpiralPresetConfigScreen extends Screen {
                 this.currentScale = config.scale();
                 this.currentGrowth = config.growth();
                 this.dividerEnabled = config.boundaryHalfWidth() > 0.0D;
-                this.currentDividerType = config.dividerType();
+                this.overworldBlock = config.getOverworldBlock();
+                this.netherBlock = config.getNetherBlock();
                 this.currentWallHeight = config.wallHeight();
                 this.currentStyle = SpiralPresetStyle.fromConfig(config);
             }
@@ -86,20 +92,20 @@ public class SpiralPresetConfigScreen extends Screen {
         int leftX = centerX - totalWidth / 2;
         int controlsWidth = 180;
         int previewX = leftX + controlsWidth + 16;
-        int startY = Math.max(26, this.height / 6 - 8);
+        int startY = Math.max(22, this.height / 6 - 12);
 
         // タイトル
         this.addRenderableWidget(new StringWidget(
                 centerX - 120,
-                startY - 20,
+                startY - 18,
                 240,
-                20,
+                18,
                 this.title,
                 this.font
         ));
 
         // --- 左ペイン: コントロール ---
-        int rowH = 22;
+        int rowH = 20;
 
         // 行1: ディメンション適用切り替え (オーバーワールド / ネザー)
         int dimBtnW = (controlsWidth - 4) / 2;
@@ -108,7 +114,7 @@ public class SpiralPresetConfigScreen extends Screen {
                         leftX,
                         startY,
                         dimBtnW,
-                        20,
+                        19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_overworld"),
                         (button, value) -> this.enableOverworld = value
                 ));
@@ -118,7 +124,7 @@ public class SpiralPresetConfigScreen extends Screen {
                         leftX + dimBtnW + 4,
                         startY,
                         dimBtnW,
-                        20,
+                        19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_nether"),
                         (button, value) -> this.enableNether = value
                 ));
@@ -130,7 +136,7 @@ public class SpiralPresetConfigScreen extends Screen {
                         leftX,
                         startY + rowH,
                         controlsWidth,
-                        20,
+                        19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.style"),
                         (button, value) -> {
                             this.currentStyle = value;
@@ -149,7 +155,7 @@ public class SpiralPresetConfigScreen extends Screen {
                 leftX,
                 startY + rowH * 2,
                 controlsWidth,
-                20,
+                19,
                 Component.translatable("createWorld.customize.logarithmic_spiral.scale"),
                 0.5D,
                 16.0D,
@@ -168,7 +174,7 @@ public class SpiralPresetConfigScreen extends Screen {
                 leftX,
                 startY + rowH * 3,
                 controlsWidth,
-                20,
+                19,
                 Component.translatable("createWorld.customize.logarithmic_spiral.growth"),
                 0.10D,
                 0.70D,
@@ -188,33 +194,58 @@ public class SpiralPresetConfigScreen extends Screen {
                         leftX,
                         startY + rowH * 4,
                         controlsWidth,
-                        20,
+                        19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.divider"),
                         (button, value) -> {
                             this.dividerEnabled = value;
-                            if (this.dividerTypeButton != null) this.dividerTypeButton.active = value;
+                            if (this.overworldBlockButton != null) this.overworldBlockButton.active = value;
+                            if (this.netherBlockButton != null) this.netherBlockButton.active = value;
                             if (this.wallHeightButton != null) this.wallHeightButton.active = value;
                             this.refreshPreview();
                         }
                 ));
 
-        // 行6: 仕切りブロックの種類
-        this.dividerTypeButton = this.addRenderableWidget(CycleButton.builder(DividerBlockType::displayName, this.currentDividerType)
-                .withValues(DividerBlockType.values())
-                .create(
-                        leftX,
-                        startY + rowH * 5,
-                        controlsWidth,
-                        20,
-                        Component.translatable("createWorld.customize.logarithmic_spiral.divider_type"),
-                        (button, value) -> {
-                            this.currentDividerType = value;
-                            this.refreshPreview();
-                        }
-                ));
-        this.dividerTypeButton.active = this.dividerEnabled;
+        // 行6: オーバーワールド仕切りブロック選択ボタン
+        this.overworldBlockButton = this.addRenderableWidget(Button.builder(
+                this.getOverworldButtonText(),
+                button -> {
+                    if (this.minecraft != null) {
+                        this.minecraft.gui.setScreen(new SpiralBlockPickerScreen(
+                                this,
+                                Component.translatable("createWorld.customize.logarithmic_spiral.select_overworld_block"),
+                                this.overworldBlock,
+                                selected -> {
+                                    this.overworldBlock = selected;
+                                    this.updateBlockButtonLabels();
+                                    this.refreshPreview();
+                                }
+                        ));
+                    }
+                }
+        ).bounds(leftX, startY + rowH * 5, controlsWidth, 19).build());
+        this.overworldBlockButton.active = this.dividerEnabled;
 
-        // 行7: 壁の高さ (0: 敷石, 1〜5)
+        // 行7: ネザー仕切りブロック選択ボタン
+        this.netherBlockButton = this.addRenderableWidget(Button.builder(
+                this.getNetherButtonText(),
+                button -> {
+                    if (this.minecraft != null) {
+                        this.minecraft.gui.setScreen(new SpiralBlockPickerScreen(
+                                this,
+                                Component.translatable("createWorld.customize.logarithmic_spiral.select_nether_block"),
+                                this.netherBlock,
+                                selected -> {
+                                    this.netherBlock = selected;
+                                    this.updateBlockButtonLabels();
+                                    this.refreshPreview();
+                                }
+                        ));
+                    }
+                }
+        ).bounds(leftX, startY + rowH * 6, controlsWidth, 19).build());
+        this.netherBlockButton.active = this.dividerEnabled;
+
+        // 行8: 壁の高さ (0: 敷石, 1〜5)
         this.wallHeightButton = this.addRenderableWidget(CycleButton.<Integer>builder(
                         val -> val == 0
                                 ? Component.translatable("createWorld.customize.logarithmic_spiral.wall_height.flat")
@@ -223,9 +254,9 @@ public class SpiralPresetConfigScreen extends Screen {
                 .withValues(0, 1, 2, 3, 4, 5)
                 .create(
                         leftX,
-                        startY + rowH * 6,
+                        startY + rowH * 7,
                         controlsWidth,
-                        20,
+                        19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.wall_height"),
                         (button, value) -> this.currentWallHeight = value
                 ));
@@ -282,6 +313,23 @@ public class SpiralPresetConfigScreen extends Screen {
         this.refreshPreview();
     }
 
+    private Component getOverworldButtonText() {
+        return Component.translatable("createWorld.customize.logarithmic_spiral.overworld_block_btn", this.overworldBlock.getName());
+    }
+
+    private Component getNetherButtonText() {
+        return Component.translatable("createWorld.customize.logarithmic_spiral.nether_block_btn", this.netherBlock.getName());
+    }
+
+    private void updateBlockButtonLabels() {
+        if (this.overworldBlockButton != null) {
+            this.overworldBlockButton.setMessage(this.getOverworldButtonText());
+        }
+        if (this.netherBlockButton != null) {
+            this.netherBlockButton.setMessage(this.getNetherButtonText());
+        }
+    }
+
     private void markCustom() {
         if (this.currentStyle != SpiralPresetStyle.CUSTOM) {
             this.currentStyle = SpiralPresetStyle.CUSTOM;
@@ -299,6 +347,8 @@ public class SpiralPresetConfigScreen extends Screen {
 
     private SpiralConfig getCurrentConfig() {
         double boundaryHalfWidth = this.dividerEnabled ? 0.5D : 0.0D;
+        String owId = BuiltInRegistries.BLOCK.getKey(this.overworldBlock).toString();
+        String netherId = BuiltInRegistries.BLOCK.getKey(this.netherBlock).toString();
         return new SpiralConfig(
                 this.currentScale,
                 this.currentGrowth,
@@ -309,7 +359,8 @@ public class SpiralPresetConfigScreen extends Screen {
                 0,
                 SpiralConfig.DEFAULT_MIN_RADIUS,
                 this.currentWallHeight,
-                this.currentDividerType
+                owId,
+                netherId
         );
     }
 
@@ -319,8 +370,8 @@ public class SpiralPresetConfigScreen extends Screen {
         int centerX = this.width / 2;
         int totalWidth = 356;
         int cardX = centerX - totalWidth / 2;
-        int startY = Math.max(26, this.height / 6 - 8);
-        int cardH = 176;
+        int startY = Math.max(22, this.height / 6 - 12);
+        int cardH = 184;
 
         // 背景カードの角丸調シャドウと半透明ダークグラデーション
         graphics.fill(cardX - 1, startY - 8, cardX + totalWidth + 1, startY + cardH + 1, 0x33FFFFFF);

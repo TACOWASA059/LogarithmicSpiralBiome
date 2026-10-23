@@ -39,7 +39,7 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
         this.calculator = new SpiralCalculator(config);
         int half = PREVIEW_SIZE / 2;
         int blockStep = 4;
-        int dividerColor = (config.dividerType() != null) ? config.dividerType().getPreviewColor() : 0xFFFFFFFF;
+        int dividerColor = config.getOverworldPreviewColor();
 
         for (int py = 0; py < PREVIEW_SIZE; py++) {
             int blockZ = (py - half) * blockStep;

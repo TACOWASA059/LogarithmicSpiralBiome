@@ -1,8 +1,10 @@
 package com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome;
 
+import com.github.tacowasa059.logarithmicspiralbiome.config.SpiralModConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.registry.SpiralBiomeSources;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralCalculator;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
@@ -24,19 +26,22 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
     public static final MapCodec<SpiralBiomeSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Biome.LIST_CODEC.fieldOf("biomes").forGetter(SpiralBiomeSource::getBiomes),
             Biome.CODEC.optionalFieldOf("boundary_biome").forGetter(SpiralBiomeSource::getBoundaryBiomeOpt),
-            SpiralConfig.MAP_CODEC.forGetter(SpiralBiomeSource::getConfig)
+            SpiralConfig.MAP_CODEC.forGetter(SpiralBiomeSource::getConfig),
+            Codec.STRING.optionalFieldOf("dimension", "overworld").forGetter(SpiralBiomeSource::getDimension)
     ).apply(instance, SpiralBiomeSource::new));
 
     private final HolderSet<Biome> biomes;
     private final Optional<Holder<Biome>> boundaryBiome;
     private final SpiralConfig config;
+    private final String dimension;
     private final SpiralCalculator calculator;
     private final Supplier<List<Holder<Biome>>> sortedBiomes;
 
-    public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config) {
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config, String dimension) {
         this.biomes = biomes;
         this.boundaryBiome = boundaryBiome;
         this.config = config != null ? config : SpiralConfig.DEFAULT;
+        this.dimension = dimension != null ? dimension : "overworld";
         this.calculator = new SpiralCalculator(this.config);
         this.sortedBiomes = Suppliers.memoize(() -> biomes.stream()
                 .filter(biome -> boundaryBiome.isEmpty() || !biome.equals(boundaryBiome.get()))
@@ -44,12 +49,16 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
                 .toList());
     }
 
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config) {
+        this(biomes, boundaryBiome, config, "overworld");
+    }
+
     public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome, SpiralConfig config) {
-        this(biomes, Optional.ofNullable(boundaryBiome), config);
+        this(biomes, Optional.ofNullable(boundaryBiome), config, "overworld");
     }
 
     public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome) {
-        this(biomes, Optional.ofNullable(boundaryBiome), SpiralConfig.DEFAULT);
+        this(biomes, Optional.ofNullable(boundaryBiome), SpiralConfig.DEFAULT, "overworld");
     }
 
     public HolderSet<Biome> getBiomes() {
@@ -66,6 +75,17 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
 
     public SpiralConfig getConfig() {
         return this.config;
+    }
+
+    public String getDimension() {
+        return this.dimension;
+    }
+
+    public boolean isDimensionEnabled() {
+        if ("nether".equalsIgnoreCase(this.dimension)) {
+            return SpiralModConfig.isEnableNether();
+        }
+        return SpiralModConfig.isEnableOverworld();
     }
 
     public boolean isBoundary(int blockX, int blockZ) {

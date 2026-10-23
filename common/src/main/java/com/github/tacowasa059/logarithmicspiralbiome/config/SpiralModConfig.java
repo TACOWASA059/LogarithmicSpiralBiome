@@ -16,10 +16,15 @@ public class SpiralModConfig {
     private static final Path CONFIG_PATH = Path.of("config", "logarithmicspiralbiome.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private static SpiralPresetStyle style = SpiralPresetStyle.STANDARD;
+    private static boolean enableOverworld = true;
+    private static boolean enableNether = true;
     private static boolean dividerBlocks = false;
-    private static double customScale = -1.0D;
-    private static double customGrowth = -1.0D;
+    private static SpiralPresetStyle style = SpiralPresetStyle.STANDARD;
+
+    private static double scale = SpiralConfig.DEFAULT_SCALE;
+    private static double growth = SpiralConfig.DEFAULT_GROWTH;
+    private static double spiralRegionWidth = SpiralConfig.DEFAULT_SPIRAL_REGION_WIDTH;
+    private static double crossRegionWidth = SpiralConfig.DEFAULT_CROSS_REGION_WIDTH;
 
     public static void load() {
         if (!Files.exists(CONFIG_PATH)) {
@@ -29,26 +34,56 @@ public class SpiralModConfig {
 
         try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
             JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+            if (json.has("enable_overworld")) {
+                enableOverworld = json.get("enable_overworld").getAsBoolean();
+            }
+            if (json.has("enable_nether")) {
+                enableNether = json.get("enable_nether").getAsBoolean();
+            }
+            if (json.has("divider_blocks")) {
+                dividerBlocks = json.get("divider_blocks").getAsBoolean();
+            }
             if (json.has("style")) {
                 String styleStr = json.get("style").getAsString();
                 for (SpiralPresetStyle s : SpiralPresetStyle.values()) {
                     if (s.name().equalsIgnoreCase(styleStr)) {
                         style = s;
+                        if (style != SpiralPresetStyle.CUSTOM) {
+                            scale = style.scale();
+                            growth = style.growth();
+                            spiralRegionWidth = style.spiralRegionWidth();
+                            crossRegionWidth = style.crossRegionWidth();
+                        }
                         break;
                     }
                 }
             }
-            if (json.has("divider_blocks")) {
-                dividerBlocks = json.get("divider_blocks").getAsBoolean();
-            }
             if (json.has("scale")) {
-                customScale = json.get("scale").getAsDouble();
+                scale = json.get("scale").getAsDouble();
+                checkIfCustom();
             }
             if (json.has("growth")) {
-                customGrowth = json.get("growth").getAsDouble();
+                growth = json.get("growth").getAsDouble();
+                checkIfCustom();
+            }
+            if (json.has("spiral_region_width")) {
+                spiralRegionWidth = json.get("spiral_region_width").getAsDouble();
+                checkIfCustom();
+            }
+            if (json.has("cross_region_width")) {
+                crossRegionWidth = json.get("cross_region_width").getAsDouble();
+                checkIfCustom();
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void checkIfCustom() {
+        if (style != SpiralPresetStyle.CUSTOM) {
+            if (Math.abs(style.scale() - scale) > 0.001D || Math.abs(style.growth() - growth) > 0.001D) {
+                style = SpiralPresetStyle.CUSTOM;
+            }
         }
     }
 
@@ -58,15 +93,16 @@ public class SpiralModConfig {
                 Files.createDirectories(CONFIG_PATH.getParent());
             }
             JsonObject json = new JsonObject();
-            json.addProperty("style", style.name().toLowerCase());
+            json.addProperty("enable_overworld", enableOverworld);
+            json.addProperty("enable_nether", enableNether);
             json.addProperty("divider_blocks", dividerBlocks);
-            json.addProperty("description", "Styles: standard, large, dense, tight. divider_blocks: true/false. scale/growth: optional custom overrides.");
-            if (customScale > 0.0D) {
-                json.addProperty("scale", customScale);
-            }
-            if (customGrowth > 0.0D) {
-                json.addProperty("growth", customGrowth);
-            }
+            json.addProperty("style", style.name().toLowerCase());
+            json.addProperty("scale", scale);
+            json.addProperty("growth", growth);
+            json.addProperty("spiral_region_width", spiralRegionWidth);
+            json.addProperty("cross_region_width", crossRegionWidth);
+            json.addProperty("description", "enable_overworld / enable_nether: true/false. style: standard, large, dense, tight, custom. Parameters: scale, growth, spiral_region_width, cross_region_width, divider_blocks.");
+
             try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
                 GSON.toJson(json, writer);
             }
@@ -76,26 +112,48 @@ public class SpiralModConfig {
     }
 
     public static SpiralConfig getEffectiveConfig() {
-        SpiralConfig base = style.toConfig(dividerBlocks);
-        double scale = customScale > 0.0D ? customScale : base.scale();
-        double growth = customGrowth > 0.0D ? customGrowth : base.growth();
+        double boundaryHalfWidth = dividerBlocks ? 0.5D : 0.0D;
         return new SpiralConfig(
                 scale,
                 growth,
-                base.spiralRegionWidth(),
-                base.crossRegionWidth(),
-                base.boundaryHalfWidth(),
-                base.centerX(),
-                base.centerZ(),
-                base.minRadius()
+                spiralRegionWidth,
+                crossRegionWidth,
+                boundaryHalfWidth,
+                0,
+                0,
+                SpiralConfig.DEFAULT_MIN_RADIUS
         );
+    }
+
+    public static boolean isEnableOverworld() {
+        return enableOverworld;
+    }
+
+    public static boolean isEnableNether() {
+        return enableNether;
+    }
+
+    public static boolean isDividerBlocks() {
+        return dividerBlocks;
     }
 
     public static SpiralPresetStyle getStyle() {
         return style;
     }
 
-    public static boolean isDividerBlocks() {
-        return dividerBlocks;
+    public static double getScale() {
+        return scale;
+    }
+
+    public static double getGrowth() {
+        return growth;
+    }
+
+    public static double getSpiralRegionWidth() {
+        return spiralRegionWidth;
+    }
+
+    public static double getCrossRegionWidth() {
+        return crossRegionWidth;
     }
 }

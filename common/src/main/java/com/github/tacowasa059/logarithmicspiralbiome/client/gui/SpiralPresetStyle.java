@@ -7,7 +7,8 @@ public enum SpiralPresetStyle {
     STANDARD("standard", 3.0D, 0.32D, Math.PI / 8.0D, Math.PI / 5.0D),
     LARGE("large", 6.0D, 0.35D, Math.PI / 8.0D, Math.PI / 5.0D),
     DENSE("dense", 1.5D, 0.32D, Math.PI / 12.0D, Math.PI / 8.0D),
-    TIGHT("tight", 2.0D, 0.18D, Math.PI / 6.0D, Math.PI / 5.0D);
+    TIGHT("tight", 2.0D, 0.18D, Math.PI / 6.0D, Math.PI / 5.0D),
+    CUSTOM("custom", 3.0D, 0.32D, Math.PI / 8.0D, Math.PI / 5.0D);
 
     private final String key;
     private final double scale;
@@ -21,6 +22,22 @@ public enum SpiralPresetStyle {
         this.growth = growth;
         this.spiralRegionWidth = spiralRegionWidth;
         this.crossRegionWidth = crossRegionWidth;
+    }
+
+    public double scale() {
+        return this.scale;
+    }
+
+    public double growth() {
+        return this.growth;
+    }
+
+    public double spiralRegionWidth() {
+        return this.spiralRegionWidth;
+    }
+
+    public double crossRegionWidth() {
+        return this.crossRegionWidth;
     }
 
     public Component displayName() {
@@ -43,11 +60,13 @@ public enum SpiralPresetStyle {
 
     public static SpiralPresetStyle fromConfig(SpiralConfig config) {
         for (SpiralPresetStyle style : values()) {
+            if (style == CUSTOM) continue;
             if (Math.abs(style.scale - config.scale()) < 0.01D
-                    && Math.abs(style.growth - config.growth()) < 0.01D) {
+                    && Math.abs(style.growth - config.growth()) < 0.01D
+                    && Math.abs(style.spiralRegionWidth - config.spiralRegionWidth()) < 0.01D) {
                 return style;
             }
         }
-        return STANDARD;
+        return CUSTOM;
     }
 }

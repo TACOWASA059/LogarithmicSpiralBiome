@@ -13,8 +13,10 @@ import net.minecraft.world.level.biome.BiomeResolver;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 
+import com.google.common.base.Suppliers;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
@@ -27,15 +29,15 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
 
     private final HolderSet<Biome> biomes;
     private final Holder<Biome> boundaryBiome;
-    private final List<Holder<Biome>> sortedBiomes;
+    private final Supplier<List<Holder<Biome>>> sortedBiomes;
 
     public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome) {
         this.biomes = biomes;
         this.boundaryBiome = boundaryBiome;
-        this.sortedBiomes = biomes.stream()
+        this.sortedBiomes = Suppliers.memoize(() -> biomes.stream()
                 .filter(biome -> !biome.equals(boundaryBiome))
                 .sorted(Comparator.comparing(SpiralBiomeSource::sortKey))
-                .toList();
+                .toList());
     }
 
     @Override
@@ -45,7 +47,7 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return Stream.concat(sortedBiomes.stream(), Stream.of(boundaryBiome));
+        return Stream.concat(this.biomes.stream(), Stream.of(boundaryBiome));
     }
 
     @Override
@@ -55,7 +57,8 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
 
     @Override
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ) {
-        if (sortedBiomes.isEmpty()) {
+        List<Holder<Biome>> biomesList = this.sortedBiomes.get();
+        if (biomesList.isEmpty()) {
             throw new IllegalStateException("Spiral biome source requires at least one biome");
         }
 
@@ -64,7 +67,7 @@ public class SpiralBiomeSource extends BiomeSource implements BiomeResolver {
         if (SpiralMath.isBoundary(blockX, blockZ, BOUNDARY_HALF_WIDTH_BLOCKS)) {
             return boundaryBiome;
         }
-        return sortedBiomes.get(SpiralMath.regionIndex(blockX, blockZ, sortedBiomes.size()));
+        return biomesList.get(SpiralMath.regionIndex(blockX, blockZ, biomesList.size()));
     }
 
     private static String sortKey(Holder<Biome> biome) {

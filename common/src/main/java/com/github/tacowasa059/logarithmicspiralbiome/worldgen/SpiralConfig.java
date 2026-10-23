@@ -1,8 +1,11 @@
 package com.github.tacowasa059.logarithmicspiralbiome.worldgen;
 
+import com.github.tacowasa059.logarithmicspiralbiome.config.SpiralModConfig;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+
+import java.util.Optional;
 
 public record SpiralConfig(
         double scale,
@@ -35,13 +38,25 @@ public record SpiralConfig(
     );
 
     public static final MapCodec<SpiralConfig> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.DOUBLE.optionalFieldOf("scale", DEFAULT_SCALE).forGetter(SpiralConfig::scale),
-            Codec.DOUBLE.optionalFieldOf("growth", DEFAULT_GROWTH).forGetter(SpiralConfig::growth),
-            Codec.DOUBLE.optionalFieldOf("spiral_region_width", DEFAULT_SPIRAL_REGION_WIDTH).forGetter(SpiralConfig::spiralRegionWidth),
-            Codec.DOUBLE.optionalFieldOf("cross_region_width", DEFAULT_CROSS_REGION_WIDTH).forGetter(SpiralConfig::crossRegionWidth),
-            Codec.DOUBLE.optionalFieldOf("boundary_half_width", DEFAULT_BOUNDARY_HALF_WIDTH).forGetter(SpiralConfig::boundaryHalfWidth),
-            Codec.INT.optionalFieldOf("center_x", DEFAULT_CENTER_X).forGetter(SpiralConfig::centerX),
-            Codec.INT.optionalFieldOf("center_z", DEFAULT_CENTER_Z).forGetter(SpiralConfig::centerZ),
-            Codec.DOUBLE.optionalFieldOf("min_radius", DEFAULT_MIN_RADIUS).forGetter(SpiralConfig::minRadius)
-    ).apply(instance, SpiralConfig::new));
+            Codec.DOUBLE.optionalFieldOf("scale").forGetter(config -> Optional.of(config.scale())),
+            Codec.DOUBLE.optionalFieldOf("growth").forGetter(config -> Optional.of(config.growth())),
+            Codec.DOUBLE.optionalFieldOf("spiral_region_width").forGetter(config -> Optional.of(config.spiralRegionWidth())),
+            Codec.DOUBLE.optionalFieldOf("cross_region_width").forGetter(config -> Optional.of(config.crossRegionWidth())),
+            Codec.DOUBLE.optionalFieldOf("boundary_half_width").forGetter(config -> Optional.of(config.boundaryHalfWidth())),
+            Codec.INT.optionalFieldOf("center_x").forGetter(config -> Optional.of(config.centerX())),
+            Codec.INT.optionalFieldOf("center_z").forGetter(config -> Optional.of(config.centerZ())),
+            Codec.DOUBLE.optionalFieldOf("min_radius").forGetter(config -> Optional.of(config.minRadius()))
+    ).apply(instance, (scaleOpt, growthOpt, spiralOpt, crossOpt, boundaryOpt, centerXOpt, centerZOpt, minRadiusOpt) -> {
+        SpiralConfig fallback = SpiralModConfig.getEffectiveConfig();
+        return new SpiralConfig(
+                scaleOpt.orElse(fallback.scale()),
+                growthOpt.orElse(fallback.growth()),
+                spiralOpt.orElse(fallback.spiralRegionWidth()),
+                crossOpt.orElse(fallback.crossRegionWidth()),
+                boundaryOpt.orElse(fallback.boundaryHalfWidth()),
+                centerXOpt.orElse(fallback.centerX()),
+                centerZOpt.orElse(fallback.centerZ()),
+                minRadiusOpt.orElse(fallback.minRadius())
+        );
+    }));
 }

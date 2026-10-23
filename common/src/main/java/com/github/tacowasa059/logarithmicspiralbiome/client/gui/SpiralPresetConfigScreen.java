@@ -12,11 +12,16 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationContext;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
@@ -27,7 +32,9 @@ import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class SpiralPresetConfigScreen extends Screen {
     private final CreateWorldScreen parent;
@@ -42,6 +49,8 @@ public class SpiralPresetConfigScreen extends Screen {
     private int currentWallHeight;
     private double currentScale;
     private double currentGrowth;
+    private String previewDimension = "overworld";
+    private CycleButton<String> previewDimensionButton;
 
     private CycleButton<SpiralPresetStyle> styleButton;
     private DoubleSlider scaleSlider;
@@ -81,6 +90,13 @@ public class SpiralPresetConfigScreen extends Screen {
                 this.currentStyle = SpiralPresetStyle.fromConfig(config);
             }
         }
+        LevelStem netherStem = context.selectedDimensions().dimensions().get(LevelStem.NETHER);
+        if (netherStem != null && netherStem.generator() instanceof NoiseBasedChunkGenerator netherNoiseGen) {
+            if (netherNoiseGen.getBiomeSource() instanceof SpiralBiomeSource netherSource) {
+                this.enableNether = true;
+                this.netherBlock = netherSource.getConfig().getNetherBlock();
+            }
+        }
     }
 
     @Override
@@ -116,7 +132,12 @@ public class SpiralPresetConfigScreen extends Screen {
                         dimBtnW,
                         19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_overworld"),
-                        (button, value) -> this.enableOverworld = value
+                        (button, value) -> {
+                            this.enableOverworld = value;
+                            if (value) {
+                                this.setPreviewDimension("overworld");
+                            }
+                        }
                 ));
 
         this.addRenderableWidget(CycleButton.onOffBuilder(this.enableNether)
@@ -126,7 +147,12 @@ public class SpiralPresetConfigScreen extends Screen {
                         dimBtnW,
                         19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_nether"),
-                        (button, value) -> this.enableNether = value
+                        (button, value) -> {
+                            this.enableNether = value;
+                            if (value) {
+                                this.setPreviewDimension("nether");
+                            }
+                        }
                 ));
 
         // 行2: 螺旋タイプ（プリセット）
@@ -217,7 +243,7 @@ public class SpiralPresetConfigScreen extends Screen {
                                 selected -> {
                                     this.overworldBlock = selected;
                                     this.updateBlockButtonLabels();
-                                    this.refreshPreview();
+                                    this.setPreviewDimension("overworld");
                                 }
                         ));
                     }
@@ -237,7 +263,7 @@ public class SpiralPresetConfigScreen extends Screen {
                                 selected -> {
                                     this.netherBlock = selected;
                                     this.updateBlockButtonLabels();
-                                    this.refreshPreview();
+                                    this.setPreviewDimension("nether");
                                 }
                         ));
                     }
@@ -263,15 +289,22 @@ public class SpiralPresetConfigScreen extends Screen {
         this.wallHeightButton.active = this.dividerEnabled;
 
         // --- 右ペイン: リアルタイムマッププレビュー ---
-        int previewY = startY + 12;
-        this.addRenderableWidget(new StringWidget(
-                previewX,
-                previewY - 14,
-                128,
-                12,
-                Component.translatable("createWorld.customize.logarithmic_spiral.preview_header"),
-                this.font
-        ));
+        int previewY = startY + 16;
+        this.previewDimensionButton = this.addRenderableWidget(CycleButton.<String>builder(
+                        val -> Component.literal("表示: " + ("nether".equals(val) ? "Nether" : "Overworld")),
+                        this.previewDimension)
+                .withValues("overworld", "nether")
+                .create(
+                        previewX,
+                        previewY - 18,
+                        128,
+                        16,
+                        Component.empty(),
+                        (button, value) -> {
+                            this.previewDimension = value;
+                            this.refreshPreview();
+                        }
+                ));
 
         if (this.previewWidget != null) {
             this.previewWidget.close();
@@ -339,9 +372,17 @@ public class SpiralPresetConfigScreen extends Screen {
         }
     }
 
+    private void setPreviewDimension(String dim) {
+        this.previewDimension = dim;
+        if (this.previewDimensionButton != null) {
+            this.previewDimensionButton.setValue(dim);
+        }
+        this.refreshPreview();
+    }
+
     private void refreshPreview() {
         if (this.previewWidget != null) {
-            this.previewWidget.updatePreview(this.getCurrentConfig(), this.dividerEnabled);
+            this.previewWidget.updatePreview(this.getCurrentConfig(), this.dividerEnabled, this.previewDimension);
         }
     }
 
@@ -394,6 +435,18 @@ public class SpiralPresetConfigScreen extends Screen {
     private void applyAndClose() {
         SpiralConfig newConfig = this.getCurrentConfig();
 
+        // グローバルコンフィグの永続化
+        SpiralModConfig.setEnableOverworld(this.enableOverworld);
+        SpiralModConfig.setEnableNether(this.enableNether);
+        SpiralModConfig.setDividerBlocks(this.dividerEnabled);
+        SpiralModConfig.setOverworldDividerBlock(BuiltInRegistries.BLOCK.getKey(this.overworldBlock).toString());
+        SpiralModConfig.setNetherDividerBlock(BuiltInRegistries.BLOCK.getKey(this.netherBlock).toString());
+        SpiralModConfig.setWallHeight(this.currentWallHeight);
+        SpiralModConfig.setScale(this.currentScale);
+        SpiralModConfig.setGrowth(this.currentGrowth);
+        SpiralModConfig.setStyle(this.currentStyle);
+        SpiralModConfig.save();
+
         WorldCreationContext.DimensionsUpdater updater = (registryAccess, worldDimensions) -> {
             Map<ResourceKey<LevelStem>, LevelStem> newDimensions = new LinkedHashMap<>(worldDimensions.dimensions());
             HolderGetter<MultiNoiseBiomeSourceParameterList> paramLists =
@@ -405,13 +458,13 @@ public class SpiralPresetConfigScreen extends Screen {
 
                 if (key.equals(LevelStem.OVERWORLD)) {
                     if (this.enableOverworld) {
-                        entry.setValue(updateStemWithSpiral(stem, newConfig, "overworld"));
+                        entry.setValue(updateStemWithSpiral(stem, newConfig, "overworld", registryAccess));
                     } else {
                         entry.setValue(updateStemWithVanilla(stem, paramLists.getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD)));
                     }
                 } else if (key.equals(LevelStem.NETHER)) {
                     if (this.enableNether) {
-                        entry.setValue(updateStemWithSpiral(stem, newConfig, "nether"));
+                        entry.setValue(updateStemWithSpiral(stem, newConfig, "nether", registryAccess));
                     } else {
                         entry.setValue(updateStemWithVanilla(stem, paramLists.getOrThrow(MultiNoiseBiomeSourceParameterLists.NETHER)));
                     }
@@ -424,17 +477,41 @@ public class SpiralPresetConfigScreen extends Screen {
         this.onClose();
     }
 
-    private static LevelStem updateStemWithSpiral(LevelStem stem, SpiralConfig config, String dimension) {
+    private static LevelStem updateStemWithSpiral(LevelStem stem, SpiralConfig config, String dimension, RegistryAccess registryAccess) {
         if (stem.generator() instanceof NoiseBasedChunkGenerator noiseGen) {
+            HolderGetter<Biome> biomeLookup = registryAccess.lookupOrThrow(Registries.BIOME);
+            boolean isNether = "nether".equalsIgnoreCase(dimension);
+            Identifier boundaryBiomeId = isNether
+                    ? Identifier.fromNamespaceAndPath("logarithmicspiralbiome", "spiral_boundary_nether")
+                    : Identifier.fromNamespaceAndPath("logarithmicspiralbiome", "spiral_boundary");
+            Optional<Holder<Biome>> boundaryBiomeOpt = biomeLookup.get(ResourceKey.create(Registries.BIOME, boundaryBiomeId))
+                    .map(ref -> (Holder<Biome>) ref);
+
+            HolderSet<Biome> biomes;
             if (noiseGen.getBiomeSource() instanceof SpiralBiomeSource spiralSource) {
-                SpiralBiomeSource newSource = new SpiralBiomeSource(
-                        spiralSource.getBiomes(),
-                        spiralSource.getBoundaryBiomeOpt(),
-                        config,
-                        dimension
-                );
-                return new LevelStem(stem.type(), new NoiseBasedChunkGenerator(newSource, noiseGen.generatorSettings()));
+                biomes = spiralSource.getBiomes();
+                if (boundaryBiomeOpt.isEmpty()) {
+                    boundaryBiomeOpt = spiralSource.getBoundaryBiomeOpt();
+                }
+            } else {
+                List<Holder<Biome>> collected = noiseGen.getBiomeSource().possibleBiomes().stream().toList();
+                if (collected.isEmpty()) {
+                    TagKey<Biome> tagKey = isNether
+                            ? TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath("logarithmicspiralbiome", "nether_biomes"))
+                            : TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath("logarithmicspiralbiome", "overworld_biomes"));
+                    biomes = biomeLookup.getOrThrow(tagKey);
+                } else {
+                    biomes = HolderSet.direct(collected);
+                }
             }
+
+            SpiralBiomeSource newSource = new SpiralBiomeSource(
+                    biomes,
+                    boundaryBiomeOpt,
+                    config,
+                    dimension
+            );
+            return new LevelStem(stem.type(), new NoiseBasedChunkGenerator(newSource, noiseGen.generatorSettings()));
         }
         return stem;
     }

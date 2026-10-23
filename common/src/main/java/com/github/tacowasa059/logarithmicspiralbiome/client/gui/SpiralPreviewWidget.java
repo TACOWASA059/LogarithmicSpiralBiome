@@ -19,12 +19,19 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
             0xFF8844AA, 0xFFAA66CC, 0xFFCC88DD, 0xFFEEAA88,
             0xFF66AA77, 0xFF448866, 0xFF556677, 0xFF778899
     };
+    private static final int[] NETHER_PALETTE = new int[]{
+            0xFF8B1A1A, 0xFF9E2A2B, 0xFF006666, 0xFF2F4F4F,
+            0xFF4A3525, 0xFFC0392B, 0xFF7B1113, 0xFF0E86D4,
+            0xFF3E2723, 0xFF5D4037, 0xFFB33939, 0xFFD35400,
+            0xFF8E44AD, 0xFF2C3E50, 0xFF6D214F, 0xFFB71540
+    };
 
     private final Identifier textureId;
     private final DynamicTexture dynamicTexture;
     private final NativeImage image;
     private SpiralConfig lastConfig;
     private SpiralCalculator calculator;
+    private String currentDimension = "overworld";
 
     public SpiralPreviewWidget(int x, int y, int size) {
         super(x, y, size, size, Component.translatable("createWorld.customize.logarithmic_spiral.preview"));
@@ -35,11 +42,18 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
     }
 
     public void updatePreview(SpiralConfig config, boolean dividerEnabled) {
+        this.updatePreview(config, dividerEnabled, this.currentDimension);
+    }
+
+    public void updatePreview(SpiralConfig config, boolean dividerEnabled, String dimension) {
         this.lastConfig = config;
+        this.currentDimension = dimension != null ? dimension : "overworld";
         this.calculator = new SpiralCalculator(config);
         int half = PREVIEW_SIZE / 2;
         int blockStep = 4;
-        int dividerColor = config.getOverworldPreviewColor();
+        boolean isNether = "nether".equalsIgnoreCase(this.currentDimension);
+        int[] palette = isNether ? NETHER_PALETTE : PALETTE;
+        int dividerColor = isNether ? config.getNetherPreviewColor() : config.getOverworldPreviewColor();
 
         for (int py = 0; py < PREVIEW_SIZE; py++) {
             int blockZ = (py - half) * blockStep;
@@ -57,8 +71,8 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
                 if (dividerEnabled && this.calculator.isBoundary(blockX, blockZ)) {
                     color = dividerColor;
                 } else {
-                    int region = this.calculator.regionIndex(blockX, blockZ, PALETTE.length);
-                    color = PALETTE[Math.floorMod(region, PALETTE.length)];
+                    int region = this.calculator.regionIndex(blockX, blockZ, palette.length);
+                    color = palette[Math.floorMod(region, palette.length)];
 
                     // チャンクサイズ基準のグリッドオーバーレイ合成
                     if (isXAxis || isZAxis) {
@@ -120,8 +134,17 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
         graphics.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, 0x55000000);
         graphics.fill(this.getX() + this.width - 1, this.getY(), this.getX() + this.width, this.getY() + this.height, 0x55000000);
 
-        // --- スケールバー HUD バッジ（左下: 16px = 64m / 4チャンク） ---
         net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+
+        // ディメンション表示バッジ（左上: [Overworld] / [Nether]）
+        boolean isNether = "nether".equalsIgnoreCase(this.currentDimension);
+        String dimLabel = isNether ? "Nether" : "Overworld";
+        int dimBadgeColor = isNether ? 0xD05A1212 : 0xD01B3A1B;
+        int dimTextW = font.width(dimLabel);
+        graphics.fill(this.getX() + 3, this.getY() + 3, this.getX() + 7 + dimTextW, this.getY() + 14, dimBadgeColor);
+        graphics.text(font, Component.literal(dimLabel), this.getX() + 5, this.getY() + 4, 0xFFFFFFFF, false);
+
+        // --- スケールバー HUD バッジ（左下: 16px = 64m / 4チャンク） ---
         int scaleBarW = 16;
         int badgeX = this.getX() + 4;
         int badgeY = this.getY() + this.height - 16;
@@ -149,11 +172,13 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
             int blockZ = (localY - half) * blockStep;
             int chunkX = blockX >> 4;
             int chunkZ = blockZ >> 4;
+            int paletteLen = isNether ? NETHER_PALETTE.length : PALETTE.length;
 
             java.util.List<Component> tooltip = java.util.List.of(
+                    Component.literal("[" + dimLabel + "]"),
                     Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.pos", blockX, blockZ),
                     Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.chunk", chunkX, chunkZ),
-                    Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.region", this.calculator != null ? this.calculator.regionIndex(blockX, blockZ, PALETTE.length) + 1 : 1)
+                    Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.region", this.calculator != null ? this.calculator.regionIndex(blockX, blockZ, paletteLen) + 1 : 1)
             );
             graphics.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
         }

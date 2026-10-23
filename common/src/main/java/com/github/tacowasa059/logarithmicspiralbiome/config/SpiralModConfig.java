@@ -196,4 +196,48 @@ public class SpiralModConfig {
     public static double getCrossRegionWidth() {
         return crossRegionWidth;
     }
+
+    public static void setEnableOverworld(boolean value) {
+        enableOverworld = value;
+    }
+
+    public static void setEnableNether(boolean value) {
+        enableNether = value;
+    }
+
+    public static void setDividerBlocks(boolean value) {
+        dividerBlocks = value;
+    }
+
+    public static void setWallHeight(int value) {
+        wallHeight = value;
+    }
+
+    public static void setOverworldDividerBlock(String value) {
+        overworldDividerBlock = value;
+    }
+
+    public static void setNetherDividerBlock(String value) {
+        netherDividerBlock = value;
+    }
+
+    public static void setStyle(SpiralPresetStyle value) {
+        style = value;
+    }
+
+    public static void setScale(double value) {
+        scale = value;
+    }
+
+    public static void setGrowth(double value) {
+        growth = value;
+    }
+
+    public static void setSpiralRegionWidth(double value) {
+        spiralRegionWidth = value;
+    }
+
+    public static void setCrossRegionWidth(double value) {
+        crossRegionWidth = value;
+    }
 }

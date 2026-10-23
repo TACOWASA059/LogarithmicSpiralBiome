@@ -253,10 +253,19 @@ public class SpiralPresetConfigScreen extends Screen {
 
         this.addRenderableWidget(new StringWidget(
                 previewX,
-                previewY + 132,
+                previewY + 130,
                 128,
-                12,
+                10,
                 Component.translatable("createWorld.customize.logarithmic_spiral.preview_footer"),
+                this.font
+        ));
+
+        this.addRenderableWidget(new StringWidget(
+                previewX,
+                previewY + 142,
+                128,
+                10,
+                Component.translatable("createWorld.customize.logarithmic_spiral.preview_grid_info"),
                 this.font
         ));
 
@@ -311,7 +320,7 @@ public class SpiralPresetConfigScreen extends Screen {
         int totalWidth = 356;
         int cardX = centerX - totalWidth / 2;
         int startY = Math.max(26, this.height / 6 - 8);
-        int cardH = 172;
+        int cardH = 176;
 
         // 背景カードの角丸調シャドウと半透明ダークグラデーション
         graphics.fill(cardX - 1, startY - 8, cardX + totalWidth + 1, startY + cardH + 1, 0x33FFFFFF);

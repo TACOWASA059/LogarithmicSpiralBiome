@@ -23,6 +23,8 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
     private final Identifier textureId;
     private final DynamicTexture dynamicTexture;
     private final NativeImage image;
+    private SpiralConfig lastConfig;
+    private SpiralCalculator calculator;
 
     public SpiralPreviewWidget(int x, int y, int size) {
         super(x, y, size, size, Component.translatable("createWorld.customize.logarithmic_spiral.preview"));
@@ -33,22 +35,51 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
     }
 
     public void updatePreview(SpiralConfig config, boolean dividerEnabled) {
-        SpiralCalculator calculator = new SpiralCalculator(config);
+        this.lastConfig = config;
+        this.calculator = new SpiralCalculator(config);
         int half = PREVIEW_SIZE / 2;
         int blockStep = 4;
         int dividerColor = (config.dividerType() != null) ? config.dividerType().getPreviewColor() : 0xFFFFFFFF;
 
         for (int py = 0; py < PREVIEW_SIZE; py++) {
             int blockZ = (py - half) * blockStep;
+            boolean isZAxis = (py == half);
+            boolean isZGrid = (Math.floorMod(py - half, 16) == 0);
+            boolean isZDot = (Math.floorMod(py - half, 4) == 0);
+
             for (int px = 0; px < PREVIEW_SIZE; px++) {
                 int blockX = (px - half) * blockStep;
+                boolean isXAxis = (px == half);
+                boolean isXGrid = (Math.floorMod(px - half, 16) == 0);
+                boolean isXDot = (Math.floorMod(px - half, 4) == 0);
 
                 int color;
-                if (dividerEnabled && calculator.isBoundary(blockX, blockZ)) {
+                if (dividerEnabled && this.calculator.isBoundary(blockX, blockZ)) {
                     color = dividerColor;
                 } else {
-                    int region = calculator.regionIndex(blockX, blockZ, PALETTE.length);
+                    int region = this.calculator.regionIndex(blockX, blockZ, PALETTE.length);
                     color = PALETTE[Math.floorMod(region, PALETTE.length)];
+
+                    // チャンクサイズ基準のグリッドオーバーレイ合成
+                    if (isXAxis || isZAxis) {
+                        // 中心十字軸 (X=0, Z=0)
+                        int r = Math.min(255, ((color >> 16) & 0xFF) + 35);
+                        int g = Math.min(255, ((color >> 8) & 0xFF) + 35);
+                        int b = Math.min(255, (color & 0xFF) + 35);
+                        color = (r << 16) | (g << 8) | b;
+                    } else if (isXGrid || isZGrid) {
+                        // 4チャンク（64m / 16px）ごとの境界グリッド線
+                        int r = (int) (((color >> 16) & 0xFF) * 0.74);
+                        int g = (int) (((color >> 8) & 0xFF) * 0.74);
+                        int b = (int) ((color & 0xFF) * 0.74);
+                        color = (r << 16) | (g << 8) | b;
+                    } else if (isXDot && isZDot) {
+                        // 1チャンク（16m / 4px）ごとの交差点ドット
+                        int r = (int) (((color >> 16) & 0xFF) * 0.86);
+                        int g = (int) (((color >> 8) & 0xFF) * 0.86);
+                        int b = (int) ((color & 0xFF) * 0.86);
+                        color = (r << 16) | (g << 8) | b;
+                    }
                 }
 
                 // 原点マーカー (0, 0)
@@ -88,6 +119,44 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
         graphics.fill(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, 0x55000000);
         graphics.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, 0x55000000);
         graphics.fill(this.getX() + this.width - 1, this.getY(), this.getX() + this.width, this.getY() + this.height, 0x55000000);
+
+        // --- スケールバー HUD バッジ（左下: 16px = 64m / 4チャンク） ---
+        net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+        int scaleBarW = 16;
+        int badgeX = this.getX() + 4;
+        int badgeY = this.getY() + this.height - 16;
+
+        // 半透明ダーク背景バッジ
+        graphics.fill(badgeX - 1, badgeY - 2, badgeX + 68, badgeY + 12, 0xA0000000);
+
+        // スケールバー線 (幅 16px)
+        int barX = badgeX + 3;
+        int barY = badgeY + 6;
+        graphics.fill(barX, barY, barX + scaleBarW, barY + 1, 0xFFFFFFFF); // 横線
+        graphics.fill(barX, barY - 2, barX + 1, barY + 3, 0xFFFFFFFF); // 左ヒゲ
+        graphics.fill(barX + scaleBarW - 1, barY - 2, barX + scaleBarW, barY + 3, 0xFFFFFFFF); // 右ヒゲ
+
+        // スケールバー文字 "64m (4ch)"
+        graphics.text(font, Component.literal("64m (4ch)"), barX + scaleBarW + 3, badgeY + 2, 0xFFE0E0E0, false);
+
+        // --- マウスホバー時のリアルタイム座標・チャンクツールチップ ---
+        if (this.isHovered() && mouseX >= this.getX() && mouseX < this.getX() + this.width && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+            int half = PREVIEW_SIZE / 2;
+            int blockStep = 4;
+            int localX = mouseX - this.getX();
+            int localY = mouseY - this.getY();
+            int blockX = (localX - half) * blockStep;
+            int blockZ = (localY - half) * blockStep;
+            int chunkX = blockX >> 4;
+            int chunkZ = blockZ >> 4;
+
+            java.util.List<Component> tooltip = java.util.List.of(
+                    Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.pos", blockX, blockZ),
+                    Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.chunk", chunkX, chunkZ),
+                    Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.region", this.calculator != null ? this.calculator.regionIndex(blockX, blockZ, PALETTE.length) + 1 : 1)
+            );
+            graphics.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
+        }
     }
 
     @Override

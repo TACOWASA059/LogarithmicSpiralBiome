@@ -27,7 +27,11 @@
   "createWorld.customize.logarithmic_spiral.wall_height": "壁の高さ",
   "createWorld.customize.logarithmic_spiral.wall_height.flat": "0 (敷石)",
   "createWorld.customize.logarithmic_spiral.preview": "螺旋プレビュー",
-  "createWorld.customize.logarithmic_spiral.preview_header": "リアルタイム配置",
-  "createWorld.customize.logarithmic_spiral.preview_footer": "中心: (0, 0)",
+  "createWorld.customize.logarithmic_spiral.preview_header": "リアルタイム螺旋マップ",
+  "createWorld.customize.logarithmic_spiral.preview_footer": "範囲: 512×512m (32×32 チャンク)",
+  "createWorld.customize.logarithmic_spiral.preview_grid_info": "1マス = 64m (4 チャンク)",
+  "createWorld.customize.logarithmic_spiral.tooltip.pos": "座標: X=%d, Z=%d",
+  "createWorld.customize.logarithmic_spiral.tooltip.chunk": "チャンク: [%d, %d]",
+  "createWorld.customize.logarithmic_spiral.tooltip.region": "バイオーム領域: #%d",
   "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s"
 }

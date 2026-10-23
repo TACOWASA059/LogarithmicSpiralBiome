@@ -27,7 +27,11 @@
   "createWorld.customize.logarithmic_spiral.wall_height": "Wall Height",
   "createWorld.customize.logarithmic_spiral.wall_height.flat": "0 (Paved)",
   "createWorld.customize.logarithmic_spiral.preview": "Spiral Preview",
-  "createWorld.customize.logarithmic_spiral.preview_header": "Live Map Preview",
-  "createWorld.customize.logarithmic_spiral.preview_footer": "Center: (0, 0)",
+  "createWorld.customize.logarithmic_spiral.preview_header": "Live Spiral Map",
+  "createWorld.customize.logarithmic_spiral.preview_footer": "Area: 512×512m (32×32 Chunks)",
+  "createWorld.customize.logarithmic_spiral.preview_grid_info": "1 Grid = 64m (4 Chunks)",
+  "createWorld.customize.logarithmic_spiral.tooltip.pos": "Pos: X=%d, Z=%d",
+  "createWorld.customize.logarithmic_spiral.tooltip.chunk": "Chunk: [%d, %d]",
+  "createWorld.customize.logarithmic_spiral.tooltip.region": "Biome Region: #%d",
   "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s"
 }

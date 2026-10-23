@@ -111,8 +111,8 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
         graphics.fill(bgX - 1, bgY - 1, bgX + bgW + 1, bgY + bgH + 1, 0x44FFFFFF); // 外枠
         graphics.fill(bgX, bgY, bgX + bgW, bgY + bgH, 0xD011151B); // 背景カード
 
-        // テクスチャ画像を描画
-        graphics.blit(this.textureId, this.getX(), this.getY(), this.width, this.height, 0.0F, 0.0F, 1.0F, 1.0F);
+        // テクスチャ画像を描画 (x0, y0, x1, y1, u0, u1, v0, v1)
+        graphics.blit(this.textureId, this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0.0F, 1.0F, 0.0F, 1.0F);
 
         // 外枠のオーバーレイ
         graphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, 0x55000000);

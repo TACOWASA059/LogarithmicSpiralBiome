@@ -138,11 +138,11 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
 
         // ディメンション表示バッジ（左上: [Overworld] / [Nether]）
         boolean isNether = "nether".equalsIgnoreCase(this.currentDimension);
-        String dimLabel = isNether ? "Nether" : "Overworld";
+        Component dimComponent = Component.translatable("createWorld.customize.logarithmic_spiral.dimension." + (isNether ? "nether" : "overworld"));
         int dimBadgeColor = isNether ? 0xD05A1212 : 0xD01B3A1B;
-        int dimTextW = font.width(dimLabel);
+        int dimTextW = font.width(dimComponent);
         graphics.fill(this.getX() + 3, this.getY() + 3, this.getX() + 7 + dimTextW, this.getY() + 14, dimBadgeColor);
-        graphics.text(font, Component.literal(dimLabel), this.getX() + 5, this.getY() + 4, 0xFFFFFFFF, false);
+        graphics.text(font, dimComponent, this.getX() + 5, this.getY() + 4, 0xFFFFFFFF, false);
 
         // --- スケールバー HUD バッジ（左下: 16px = 64m / 4チャンク） ---
         int scaleBarW = 16;
@@ -175,7 +175,7 @@ public class SpiralPreviewWidget extends AbstractWidget implements AutoCloseable
             int paletteLen = isNether ? NETHER_PALETTE.length : PALETTE.length;
 
             java.util.List<Component> tooltip = java.util.List.of(
-                    Component.literal("[" + dimLabel + "]"),
+                    Component.literal("[").append(dimComponent).append("]"),
                     Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.pos", blockX, blockZ),
                     Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.chunk", chunkX, chunkZ),
                     Component.translatable("createWorld.customize.logarithmic_spiral.tooltip.region", this.calculator != null ? this.calculator.regionIndex(blockX, blockZ, paletteLen) + 1 : 1)

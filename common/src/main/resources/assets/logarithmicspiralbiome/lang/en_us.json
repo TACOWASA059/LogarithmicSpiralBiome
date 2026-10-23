@@ -31,5 +31,8 @@
   "createWorld.customize.logarithmic_spiral.tooltip.pos": "Pos: X=%d, Z=%d",
   "createWorld.customize.logarithmic_spiral.tooltip.chunk": "Chunk: [%d, %d]",
   "createWorld.customize.logarithmic_spiral.tooltip.region": "Biome Region: #%d",
-  "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s"
+  "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s",
+  "createWorld.customize.logarithmic_spiral.preview_dimension": "View",
+  "createWorld.customize.logarithmic_spiral.dimension.overworld": "Overworld",
+  "createWorld.customize.logarithmic_spiral.dimension.nether": "Nether"
 }

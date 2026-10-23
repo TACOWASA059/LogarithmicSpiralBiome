@@ -31,5 +31,8 @@
   "createWorld.customize.logarithmic_spiral.tooltip.pos": "座標: X=%d, Z=%d",
   "createWorld.customize.logarithmic_spiral.tooltip.chunk": "チャンク: [%d, %d]",
   "createWorld.customize.logarithmic_spiral.tooltip.region": "バイオーム領域: #%d",
-  "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s"
+  "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s",
+  "createWorld.customize.logarithmic_spiral.preview_dimension": "表示",
+  "createWorld.customize.logarithmic_spiral.dimension.overworld": "オーバーワールド",
+  "createWorld.customize.logarithmic_spiral.dimension.nether": "ネザー"
 }

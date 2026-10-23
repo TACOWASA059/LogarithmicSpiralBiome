@@ -291,7 +291,7 @@ public class SpiralPresetConfigScreen extends Screen {
         // --- 右ペイン: リアルタイムマッププレビュー ---
         int previewY = startY + 16;
         this.previewDimensionButton = this.addRenderableWidget(CycleButton.<String>builder(
-                        val -> Component.literal("表示: " + ("nether".equals(val) ? "Nether" : "Overworld")),
+                        val -> Component.translatable("createWorld.customize.logarithmic_spiral.dimension." + val),
                         this.previewDimension)
                 .withValues("overworld", "nether")
                 .create(
@@ -299,7 +299,7 @@ public class SpiralPresetConfigScreen extends Screen {
                         previewY - 18,
                         128,
                         16,
-                        Component.empty(),
+                        Component.translatable("createWorld.customize.logarithmic_spiral.preview_dimension"),
                         (button, value) -> {
                             this.previewDimension = value;
                             this.refreshPreview();

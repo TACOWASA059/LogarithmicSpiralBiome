@@ -1,7 +1,10 @@
 package com.github.tacowasa059.logarithmicspiralbiome.worldgen.biome;
 
+import com.github.tacowasa059.logarithmicspiralbiome.config.SpiralModConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.registry.SpiralBiomeSources;
-import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralMath;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralCalculator;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
+import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,27 +19,86 @@ import net.minecraft.world.level.biome.Climate;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class SpiralBiomeSource extends BiomeSource {
     public static final MapCodec<SpiralBiomeSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            RegistryCodecs.homogeneousList(Registries.BIOME).fieldOf("biomes").forGetter(source -> source.biomes),
-            Biome.CODEC.fieldOf("boundary_biome").forGetter(source -> source.boundaryBiome)
+            RegistryCodecs.homogeneousList(Registries.BIOME).fieldOf("biomes").forGetter(SpiralBiomeSource::getBiomes),
+            Biome.CODEC.optionalFieldOf("boundary_biome").forGetter(SpiralBiomeSource::getBoundaryBiomeOpt),
+            SpiralConfig.MAP_CODEC.forGetter(SpiralBiomeSource::getConfig),
+            Codec.STRING.optionalFieldOf("dimension", "overworld").forGetter(SpiralBiomeSource::getDimension)
     ).apply(instance, SpiralBiomeSource::new));
 
-    private static final double BOUNDARY_HALF_WIDTH_BLOCKS = 0.5D;
-
     private final HolderSet<Biome> biomes;
-    private final Holder<Biome> boundaryBiome;
-    private final List<Holder<Biome>> sortedBiomes;
+    private final Optional<Holder<Biome>> boundaryBiome;
+    private final SpiralConfig config;
+    private final String dimension;
+    private final SpiralCalculator calculator;
+    private final Supplier<List<Holder<Biome>>> sortedBiomes;
+    private final Supplier<List<Holder<Biome>>> landBiomes;
 
-    public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome) {
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config, String dimension) {
         this.biomes = biomes;
         this.boundaryBiome = boundaryBiome;
-        this.sortedBiomes = biomes.stream()
-                .filter(biome -> !biome.equals(boundaryBiome))
+        this.config = config != null ? config : SpiralConfig.DEFAULT;
+        this.dimension = dimension != null ? dimension : "overworld";
+        this.calculator = new SpiralCalculator(this.config);
+        this.sortedBiomes = Suppliers.memoize(() -> biomes.stream()
+                .filter(biome -> boundaryBiome.isEmpty() || !biome.equals(boundaryBiome.get()))
                 .sorted(Comparator.comparing(SpiralBiomeSource::sortKey))
-                .toList();
+                .toList());
+        this.landBiomes = Suppliers.memoize(() -> {
+            List<Holder<Biome>> all = this.sortedBiomes.get();
+            List<Holder<Biome>> land = all.stream()
+                    .filter(biome -> !isOceanBiome(biome))
+                    .toList();
+            return land.isEmpty() ? all : land;
+        });
+    }
+
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config) {
+        this(biomes, boundaryBiome, config, "overworld");
+    }
+
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome, SpiralConfig config) {
+        this(biomes, Optional.ofNullable(boundaryBiome), config, "overworld");
+    }
+
+    public SpiralBiomeSource(HolderSet<Biome> biomes, Holder<Biome> boundaryBiome) {
+        this(biomes, Optional.ofNullable(boundaryBiome), SpiralConfig.DEFAULT, "overworld");
+    }
+
+    public HolderSet<Biome> getBiomes() {
+        return this.biomes;
+    }
+
+    public Optional<Holder<Biome>> getBoundaryBiomeOpt() {
+        return this.boundaryBiome;
+    }
+
+    public Holder<Biome> getBoundaryBiome() {
+        return this.boundaryBiome.orElse(null);
+    }
+
+    public SpiralConfig getConfig() {
+        return this.config;
+    }
+
+    public String getDimension() {
+        return this.dimension;
+    }
+
+    public boolean isDimensionEnabled() {
+        if ("nether".equalsIgnoreCase(this.dimension)) {
+            return SpiralModConfig.isEnableNether();
+        }
+        return SpiralModConfig.isEnableOverworld();
+    }
+
+    public boolean isBoundary(int blockX, int blockZ) {
+        return this.boundaryBiome.isPresent() && this.calculator.isBoundary(blockX, blockZ);
     }
 
     @Override
@@ -46,21 +108,44 @@ public class SpiralBiomeSource extends BiomeSource {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return Stream.concat(sortedBiomes.stream(), Stream.of(boundaryBiome));
+        return this.boundaryBiome
+                .map(holder -> Stream.concat(this.biomes.stream(), Stream.of(holder)))
+                .orElseGet(this.biomes::stream);
     }
 
     @Override
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
-        if (sortedBiomes.isEmpty()) {
-            throw new IllegalStateException("Spiral biome source requires at least one biome");
-        }
-
         int blockX = QuartPos.toBlock(quartX);
         int blockZ = QuartPos.toBlock(quartZ);
-        if (SpiralMath.isBoundary(blockX, blockZ, BOUNDARY_HALF_WIDTH_BLOCKS)) {
-            return boundaryBiome;
+        if (this.calculator.isBoundary(blockX, blockZ) && this.boundaryBiome.isPresent()) {
+            return this.boundaryBiome.get();
         }
-        return sortedBiomes.get(SpiralMath.regionIndex(blockX, blockZ, sortedBiomes.size()));
+
+        double dx = blockX - this.config.centerX();
+        double dz = blockZ - this.config.centerZ();
+        double distSq = dx * dx + dz * dz;
+        double elevateRadius = SpiralModConfig.getSpawnElevateRadius();
+
+        List<Holder<Biome>> biomesList;
+        if ("overworld".equalsIgnoreCase(this.dimension) && elevateRadius > 0.0D && distSq <= elevateRadius * elevateRadius) {
+            biomesList = this.landBiomes.get();
+        } else {
+            biomesList = this.sortedBiomes.get();
+        }
+
+        if (biomesList.isEmpty()) {
+            throw new IllegalStateException("Spiral biome source requires at least one biome");
+        }
+        return biomesList.get(this.calculator.regionIndex(blockX, blockZ, biomesList.size()));
+    }
+
+    private static boolean isOceanBiome(Holder<Biome> biome) {
+        if (biome.is(net.minecraft.tags.BiomeTags.IS_OCEAN)) {
+            return true;
+        }
+        return biome.unwrapKey()
+                .map(key -> key.identifier().getPath().contains("ocean"))
+                .orElse(false);
     }
 
     private static String sortKey(Holder<Biome> biome) {

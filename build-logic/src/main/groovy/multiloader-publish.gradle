@@ -1,0 +1,84 @@
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+
+plugins {
+    id 'com.modrinth.minotaur'
+    id 'net.darkhax.curseforgegradle'
+}
+
+def loader = project.name
+def loaderName = ['fabric': 'Fabric', 'neoforge': 'NeoForge', 'forge': 'Forge'].getOrDefault(loader, loader.capitalize())
+def uploadJar = tasks.getByName('jar')
+def supportedVersions = supported_versions.split(',').collect { it.trim() }.findAll { it }
+def changelogFile = rootProject.file('CHANGELOG.md')
+def releaseNotes = "${mod_name} ${version} for Minecraft ${minecraft_version}." as String
+if (changelogFile.exists()) {
+    def section = changelogFile.text =~ /(?ms)^##\s+\Q${version}\E\s*\n(.*?)(?=^##\s|\z)/
+    releaseNotes = section.find() ? section.group(1).trim() : changelogFile.text.trim()
+}
+
+def modrinthBody = { File readme ->
+    readme.text.replaceAll(/(?s)<!--\s*modrinth_exclude\.start\s*-->.*?<!--\s*modrinth_exclude\.end\s*-->\s*/, '').trim()
+}
+def requireCredentials = { String projectId, String idProperty, String tokenVariable ->
+    if (!projectId) throw new GradleException("${idProperty} is not set in gradle.properties.")
+    if (!System.getenv(tokenVariable)) throw new GradleException("The ${tokenVariable} environment variable is not set.")
+}
+
+modrinth {
+    projectId = modrinth_id
+    versionNumber = "${loaderName}${minecraft_version}-${version}"
+    versionName = "${mod_name} ${version}"
+    versionType = release_type
+    uploadFile = uploadJar
+    gameVersions = supportedVersions
+    loaders = [loader]
+    changelog = releaseNotes
+    def readme = rootProject.file('README.md')
+    if (readme.exists()) syncBodyFrom = modrinthBody(readme)
+    if (loader == 'fabric') {
+        dependencies { required.project 'fabric-api' }
+    }
+}
+
+tasks.named('modrinth') {
+    group = 'publishing'
+    dependsOn uploadJar
+    doFirst { requireCredentials(modrinth_id, 'modrinth_id', 'MODRINTH_TOKEN') }
+}
+
+tasks.register('publishCurseForge', TaskPublishCurseForge) {
+    group = 'publishing'
+    description = "Uploads the ${loader} jar to CurseForge."
+    dependsOn uploadJar
+    apiToken = System.getenv('CURSEFORGE_TOKEN')
+    doFirst { requireCredentials(curseforge_id, 'curseforge_id', 'CURSEFORGE_TOKEN') }
+    def mainFile = upload(curseforge_id ?: '000000', uploadJar)
+    mainFile.releaseType = release_type
+    mainFile.changelog = releaseNotes
+    mainFile.changelogType = 'markdown'
+    mainFile.addModLoader(loader)
+    supportedVersions.each { mainFile.addGameVersion(it) }
+    curseforge_environments.split(',').collect { it.trim() }.findAll { it }.each { mainFile.addGameVersion(it) }
+    if (loader == 'fabric') mainFile.addRequirement('fabric-api')
+}
+
+tasks.register('publishInfo') {
+    group = 'publishing'
+    description = "Prints publishing details for the ${loader} jar without uploading."
+    doLast {
+        logger.lifecycle("""
+            ${loaderName} upload
+              file            : ${uploadJar.archiveFileName.get()}
+              minecraft       : ${supportedVersions.join(', ')}
+              release type    : ${release_type}
+              modrinth        : ${modrinth_id} / version ${loaderName}${minecraft_version}-${version} "${mod_name} ${version}"
+              curseforge      : ${curseforge_id}
+              fabric api dep  : ${loader == 'fabric'}
+              changelog       :
+            ${releaseNotes}
+
+            Project page body that modrinthSyncBody would send:
+            ${rootProject.file('README.md').exists() ? modrinthBody(rootProject.file('README.md')) : '(no README.md)'}
+        """.stripIndent())
+    }
+}

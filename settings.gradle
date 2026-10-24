@@ -51,5 +51,4 @@ rootProject.name = 'logarithmicspiralbiome'
 includeBuild('build-logic')
 include("common")
 include("fabric")
-include("forge")
 include("neoforge")

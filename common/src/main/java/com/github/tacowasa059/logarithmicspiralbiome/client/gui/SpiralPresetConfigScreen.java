@@ -36,6 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.NetherTerrainStyle;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+
 public class SpiralPresetConfigScreen extends Screen {
     private final CreateWorldScreen parent;
     private final WorldCreationContext context;
@@ -49,6 +52,8 @@ public class SpiralPresetConfigScreen extends Screen {
     private int currentWallHeight;
     private double currentScale;
     private double currentGrowth;
+    private NetherTerrainStyle netherTerrainStyle;
+    private double spawnElevateRadius;
     private String previewDimension = "overworld";
     private CycleButton<String> previewDimensionButton;
 
@@ -59,6 +64,8 @@ public class SpiralPresetConfigScreen extends Screen {
     private Button overworldBlockButton;
     private Button netherBlockButton;
     private CycleButton<Integer> wallHeightButton;
+    private CycleButton<NetherTerrainStyle> netherTerrainButton;
+    private DoubleSlider spawnElevateSlider;
     private SpiralPreviewWidget previewWidget;
 
     public SpiralPresetConfigScreen(CreateWorldScreen parent, WorldCreationContext context) {
@@ -76,6 +83,8 @@ public class SpiralPresetConfigScreen extends Screen {
         this.currentWallHeight = SpiralModConfig.getWallHeight();
         this.currentScale = SpiralModConfig.getScale();
         this.currentGrowth = SpiralModConfig.getGrowth();
+        this.netherTerrainStyle = SpiralModConfig.getNetherTerrainStyle();
+        this.spawnElevateRadius = SpiralModConfig.getSpawnElevateRadius();
 
         // 既存のディメンション設定があれば初期値を優先同期
         if (context.selectedDimensions().overworld() instanceof NoiseBasedChunkGenerator noiseGen) {
@@ -134,6 +143,7 @@ public class SpiralPresetConfigScreen extends Screen {
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_overworld"),
                         (button, value) -> {
                             this.enableOverworld = value;
+                            if (this.spawnElevateSlider != null) this.spawnElevateSlider.active = value;
                             if (value) {
                                 this.setPreviewDimension("overworld");
                             }
@@ -149,6 +159,7 @@ public class SpiralPresetConfigScreen extends Screen {
                         Component.translatable("createWorld.customize.logarithmic_spiral.enable_nether"),
                         (button, value) -> {
                             this.enableNether = value;
+                            if (this.netherTerrainButton != null) this.netherTerrainButton.active = value;
                             if (value) {
                                 this.setPreviewDimension("nether");
                             }
@@ -231,7 +242,8 @@ public class SpiralPresetConfigScreen extends Screen {
                         }
                 ));
 
-        // 行6: オーバーワールド仕切りブロック選択ボタン
+        // 行6: 仕切りブロック選択ボタン（OW / Nether を横並び1行に配置）
+        int blockBtnW = (controlsWidth - 4) / 2;
         this.overworldBlockButton = this.addRenderableWidget(Button.builder(
                 this.getOverworldButtonText(),
                 button -> {
@@ -248,10 +260,9 @@ public class SpiralPresetConfigScreen extends Screen {
                         ));
                     }
                 }
-        ).bounds(leftX, startY + rowH * 5, controlsWidth, 19).build());
+        ).bounds(leftX, startY + rowH * 5, blockBtnW, 19).build());
         this.overworldBlockButton.active = this.dividerEnabled;
 
-        // 行7: ネザー仕切りブロック選択ボタン
         this.netherBlockButton = this.addRenderableWidget(Button.builder(
                 this.getNetherButtonText(),
                 button -> {
@@ -268,10 +279,10 @@ public class SpiralPresetConfigScreen extends Screen {
                         ));
                     }
                 }
-        ).bounds(leftX, startY + rowH * 6, controlsWidth, 19).build());
+        ).bounds(leftX + blockBtnW + 4, startY + rowH * 5, blockBtnW, 19).build());
         this.netherBlockButton.active = this.dividerEnabled;
 
-        // 行8: 壁の高さ (0: 敷石, 1〜5)
+        // 行7: 壁の高さ (0: 敷石, 1〜5)
         this.wallHeightButton = this.addRenderableWidget(CycleButton.<Integer>builder(
                         val -> val == 0
                                 ? Component.translatable("createWorld.customize.logarithmic_spiral.wall_height.flat")
@@ -280,13 +291,46 @@ public class SpiralPresetConfigScreen extends Screen {
                 .withValues(0, 1, 2, 3, 4, 5)
                 .create(
                         leftX,
-                        startY + rowH * 7,
+                        startY + rowH * 6,
                         controlsWidth,
                         19,
                         Component.translatable("createWorld.customize.logarithmic_spiral.wall_height"),
                         (button, value) -> this.currentWallHeight = value
                 ));
         this.wallHeightButton.active = this.dividerEnabled;
+
+        // 行8: ネザー地形スタイル
+        this.netherTerrainButton = this.addRenderableWidget(CycleButton.<NetherTerrainStyle>builder(
+                        NetherTerrainStyle::displayName,
+                        this.netherTerrainStyle)
+                .withValues(NetherTerrainStyle.values())
+                .create(
+                        leftX,
+                        startY + rowH * 7,
+                        controlsWidth,
+                        19,
+                        Component.translatable("createWorld.customize.logarithmic_spiral.nether_terrain"),
+                        (button, value) -> this.netherTerrainStyle = value
+                ));
+        this.netherTerrainButton.active = this.enableNether;
+
+        // 行9: スポーン底上げスライダー (0m 〜 300m, step: 10m)
+        this.spawnElevateSlider = this.addRenderableWidget(new DoubleSlider(
+                leftX,
+                startY + rowH * 8,
+                controlsWidth,
+                19,
+                Component.translatable("createWorld.customize.logarithmic_spiral.spawn_elevate"),
+                0.0D,
+                300.0D,
+                10.0D,
+                this.spawnElevateRadius,
+                val -> val <= 0.0D
+                        ? Component.translatable("createWorld.customize.logarithmic_spiral.spawn_elevate.off")
+                        : Component.translatable("createWorld.customize.logarithmic_spiral.spawn_elevate.radius", (int) Math.round(val)),
+                val -> this.spawnElevateRadius = val
+        ));
+        this.spawnElevateSlider.active = this.enableOverworld;
 
         // --- 右ペイン: リアルタイムマッププレビュー ---
         int previewY = startY + 16;
@@ -412,7 +456,7 @@ public class SpiralPresetConfigScreen extends Screen {
         int totalWidth = 356;
         int cardX = centerX - totalWidth / 2;
         int startY = Math.max(22, this.height / 6 - 12);
-        int cardH = 184;
+        int cardH = 206;
 
         // 背景カードの角丸調シャドウと半透明ダークグラデーション
         graphics.fill(cardX - 1, startY - 8, cardX + totalWidth + 1, startY + cardH + 1, 0x33FFFFFF);
@@ -445,6 +489,8 @@ public class SpiralPresetConfigScreen extends Screen {
         SpiralModConfig.setScale(this.currentScale);
         SpiralModConfig.setGrowth(this.currentGrowth);
         SpiralModConfig.setStyle(this.currentStyle);
+        SpiralModConfig.setNetherTerrainStyle(this.netherTerrainStyle);
+        SpiralModConfig.setSpawnElevateRadius(this.spawnElevateRadius);
         SpiralModConfig.save();
 
         WorldCreationContext.DimensionsUpdater updater = (registryAccess, worldDimensions) -> {
@@ -458,13 +504,13 @@ public class SpiralPresetConfigScreen extends Screen {
 
                 if (key.equals(LevelStem.OVERWORLD)) {
                     if (this.enableOverworld) {
-                        entry.setValue(updateStemWithSpiral(stem, newConfig, "overworld", registryAccess));
+                        entry.setValue(updateStemWithSpiral(stem, newConfig, "overworld", registryAccess, this.netherTerrainStyle));
                     } else {
                         entry.setValue(updateStemWithVanilla(stem, paramLists.getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD)));
                     }
                 } else if (key.equals(LevelStem.NETHER)) {
                     if (this.enableNether) {
-                        entry.setValue(updateStemWithSpiral(stem, newConfig, "nether", registryAccess));
+                        entry.setValue(updateStemWithSpiral(stem, newConfig, "nether", registryAccess, this.netherTerrainStyle));
                     } else {
                         entry.setValue(updateStemWithVanilla(stem, paramLists.getOrThrow(MultiNoiseBiomeSourceParameterLists.NETHER)));
                     }
@@ -477,7 +523,7 @@ public class SpiralPresetConfigScreen extends Screen {
         this.onClose();
     }
 
-    private static LevelStem updateStemWithSpiral(LevelStem stem, SpiralConfig config, String dimension, RegistryAccess registryAccess) {
+    private static LevelStem updateStemWithSpiral(LevelStem stem, SpiralConfig config, String dimension, RegistryAccess registryAccess, NetherTerrainStyle netherTerrainStyle) {
         if (stem.generator() instanceof NoiseBasedChunkGenerator noiseGen) {
             HolderGetter<Biome> biomeLookup = registryAccess.lookupOrThrow(Registries.BIOME);
             boolean isNether = "nether".equalsIgnoreCase(dimension);
@@ -505,13 +551,19 @@ public class SpiralPresetConfigScreen extends Screen {
                 }
             }
 
+            Holder<NoiseGeneratorSettings> settings = noiseGen.generatorSettings();
+            if (isNether && netherTerrainStyle != null) {
+                HolderGetter<NoiseGeneratorSettings> settingsLookup = registryAccess.lookupOrThrow(Registries.NOISE_SETTINGS);
+                settings = settingsLookup.getOrThrow(ResourceKey.create(Registries.NOISE_SETTINGS, netherTerrainStyle.getSettingsId()));
+            }
+
             SpiralBiomeSource newSource = new SpiralBiomeSource(
                     biomes,
                     boundaryBiomeOpt,
                     config,
                     dimension
             );
-            return new LevelStem(stem.type(), new NoiseBasedChunkGenerator(newSource, noiseGen.generatorSettings()));
+            return new LevelStem(stem.type(), new NoiseBasedChunkGenerator(newSource, settings));
         }
         return stem;
     }

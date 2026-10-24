@@ -34,5 +34,11 @@
   "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s",
   "createWorld.customize.logarithmic_spiral.preview_dimension": "表示",
   "createWorld.customize.logarithmic_spiral.dimension.overworld": "オーバーワールド",
-  "createWorld.customize.logarithmic_spiral.dimension.nether": "ネザー"
+  "createWorld.customize.logarithmic_spiral.dimension.nether": "ネザー",
+  "createWorld.customize.logarithmic_spiral.spawn_elevate": "スポーン底上げ",
+  "createWorld.customize.logarithmic_spiral.spawn_elevate.off": "スポーン底上げ: オフ",
+  "createWorld.customize.logarithmic_spiral.spawn_elevate.radius": "スポーン底上げ: 半径 %dm",
+  "createWorld.customize.logarithmic_spiral.nether_terrain": "ネザー地形",
+  "createWorld.customize.logarithmic_spiral.nether_terrain.gentle": "現世風 (緩やかな起伏)",
+  "createWorld.customize.logarithmic_spiral.nether_terrain.vanilla": "バニラ"
 }

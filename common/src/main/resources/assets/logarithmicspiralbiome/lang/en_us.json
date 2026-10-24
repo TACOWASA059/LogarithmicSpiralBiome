@@ -34,5 +34,11 @@
   "createWorld.customize.logarithmic_spiral.slider_format": "%s: %s",
   "createWorld.customize.logarithmic_spiral.preview_dimension": "View",
   "createWorld.customize.logarithmic_spiral.dimension.overworld": "Overworld",
-  "createWorld.customize.logarithmic_spiral.dimension.nether": "Nether"
+  "createWorld.customize.logarithmic_spiral.dimension.nether": "Nether",
+  "createWorld.customize.logarithmic_spiral.spawn_elevate": "Spawn Elevation",
+  "createWorld.customize.logarithmic_spiral.spawn_elevate.off": "Spawn Elevation: OFF",
+  "createWorld.customize.logarithmic_spiral.spawn_elevate.radius": "Spawn Elevation: Radius %dm",
+  "createWorld.customize.logarithmic_spiral.nether_terrain": "Nether Terrain",
+  "createWorld.customize.logarithmic_spiral.nether_terrain.gentle": "Overworld-like (Gentle)",
+  "createWorld.customize.logarithmic_spiral.nether_terrain.vanilla": "Vanilla"
 }

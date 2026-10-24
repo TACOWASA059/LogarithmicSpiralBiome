@@ -1,6 +1,7 @@
 package com.github.tacowasa059.logarithmicspiralbiome.config;
 
 import com.github.tacowasa059.logarithmicspiralbiome.client.gui.SpiralPresetStyle;
+import com.github.tacowasa059.logarithmicspiralbiome.worldgen.NetherTerrainStyle;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.SpiralConfig;
 import com.github.tacowasa059.logarithmicspiralbiome.worldgen.feature.DividerBlockType;
 import com.google.gson.Gson;
@@ -24,6 +25,7 @@ public class SpiralModConfig {
     private static String overworldDividerBlock = SpiralConfig.DEFAULT_OVERWORLD_DIVIDER_BLOCK;
     private static String netherDividerBlock = SpiralConfig.DEFAULT_NETHER_DIVIDER_BLOCK;
     private static SpiralPresetStyle style = SpiralPresetStyle.STANDARD;
+    private static NetherTerrainStyle netherTerrainStyle = NetherTerrainStyle.GENTLE;
 
     private static double scale = SpiralConfig.DEFAULT_SCALE;
     private static double growth = SpiralConfig.DEFAULT_GROWTH;
@@ -96,6 +98,9 @@ public class SpiralModConfig {
             if (json.has("spawn_elevate_radius")) {
                 spawnElevateRadius = json.get("spawn_elevate_radius").getAsDouble();
             }
+            if (json.has("nether_terrain_style")) {
+                netherTerrainStyle = NetherTerrainStyle.fromKey(json.get("nether_terrain_style").getAsString());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -127,7 +132,8 @@ public class SpiralModConfig {
             json.addProperty("spiral_region_width", spiralRegionWidth);
             json.addProperty("cross_region_width", crossRegionWidth);
             json.addProperty("spawn_elevate_radius", spawnElevateRadius);
-            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. overworld_divider_block / nether_divider_block: any block ID (e.g. minecraft:stone, minecraft:sea_lantern, etc). style: standard, large, dense, tight, custom. spawn_elevate_radius: radius around 0,0 where terrain is elevated above sea level (default 100.0).");
+            json.addProperty("nether_terrain_style", netherTerrainStyle.getKey());
+            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. overworld_divider_block / nether_divider_block: any block ID (e.g. minecraft:stone, minecraft:sea_lantern, etc). style: standard, large, dense, tight, custom. spawn_elevate_radius: radius around 0,0 where terrain is elevated above sea level (default 100.0). nether_terrain_style: gentle, vanilla.");
 
             try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
                 GSON.toJson(json, writer);
@@ -252,5 +258,15 @@ public class SpiralModConfig {
 
     public static void setSpawnElevateRadius(double value) {
         spawnElevateRadius = Math.max(0.0D, value);
+    }
+
+    public static NetherTerrainStyle getNetherTerrainStyle() {
+        return netherTerrainStyle;
+    }
+
+    public static void setNetherTerrainStyle(NetherTerrainStyle value) {
+        if (value != null) {
+            netherTerrainStyle = value;
+        }
     }
 }

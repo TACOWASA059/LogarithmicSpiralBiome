@@ -2,8 +2,11 @@
 .gradle-user/
 .idea/
 .vscode/
+.claude
 _tmp_*/
 build/
 run/
 run-data/
 runs/
+jars/
+*.jar

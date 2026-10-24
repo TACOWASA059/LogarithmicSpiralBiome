@@ -106,14 +106,18 @@ public abstract class WorldDimensionsMixin {
         HolderSet<Biome> biomes = HolderSet.direct(biomesList);
 
         Optional<Holder<Biome>> boundaryBiomeOpt = Optional.empty();
+        Holder<net.minecraft.world.level.levelgen.NoiseGeneratorSettings> settings = noiseGen.generatorSettings();
         LevelStem presetNether = this.dimensions.get(LevelStem.NETHER);
-        if (presetNether != null && presetNether.generator().getBiomeSource() instanceof SpiralBiomeSource spiralPreset) {
-            boundaryBiomeOpt = spiralPreset.getBoundaryBiomeOpt();
+        if (presetNether != null && presetNether.generator() instanceof NoiseBasedChunkGenerator presetNoiseGen) {
+            settings = presetNoiseGen.generatorSettings();
+            if (presetNoiseGen.getBiomeSource() instanceof SpiralBiomeSource spiralPreset) {
+                boundaryBiomeOpt = spiralPreset.getBoundaryBiomeOpt();
+            }
         }
 
         SpiralConfig config = createCurrentConfig();
         SpiralBiomeSource newSource = new SpiralBiomeSource(biomes, boundaryBiomeOpt, config, "nether");
-        return new LevelStem(stem.type(), new NoiseBasedChunkGenerator(newSource, noiseGen.generatorSettings()));
+        return new LevelStem(stem.type(), new NoiseBasedChunkGenerator(newSource, settings));
     }
 
     private LevelStem convertToSpiralOverworld(LevelStem stem, NoiseBasedChunkGenerator noiseGen) {

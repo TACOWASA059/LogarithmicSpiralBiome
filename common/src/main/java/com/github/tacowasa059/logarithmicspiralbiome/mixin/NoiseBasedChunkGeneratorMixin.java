@@ -73,6 +73,8 @@ public abstract class NoiseBasedChunkGeneratorMixin extends ChunkGenerator {
         }
 
         BlockState defaultBlock = this.settings.value().defaultBlock();
+        Heightmap oceanFloor = chunkAccess.getOrCreateHeightmapUnprimed(Heightmap.Types.OCEAN_FLOOR_WG);
+        Heightmap worldSurface = chunkAccess.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         double minTargetHeight = 64.0D;
         double centerExtra = 3.0D;
@@ -98,7 +100,15 @@ public abstract class NoiseBasedChunkGeneratorMixin extends ChunkGenerator {
                         pos.set(blockX, y, blockZ);
                         BlockState state = chunkAccess.getBlockState(pos);
                         if (!state.isSolid() || state.is(Blocks.WATER)) {
-                            chunkAccess.setBlockState(pos, defaultBlock);
+                            int sectionIndex = chunkAccess.getSectionIndex(y);
+                            if (sectionIndex >= 0 && sectionIndex < chunkAccess.getSectionsCount()) {
+                                net.minecraft.world.level.chunk.LevelChunkSection section = chunkAccess.getSection(sectionIndex);
+                                if (section != null) {
+                                    section.setBlockState(localX, y & 15, localZ, defaultBlock, false);
+                                    oceanFloor.update(localX, y, localZ, defaultBlock);
+                                    worldSurface.update(localX, y, localZ, defaultBlock);
+                                }
+                            }
                         }
                     }
                 }

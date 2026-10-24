@@ -23,7 +23,7 @@
           "boundary_biome": "logarithmicspiralbiome:spiral_boundary_nether",
           "biomes": "#logarithmicspiralbiome:nether_biomes"
         },
-        "settings": "minecraft:nether"
+        "settings": "logarithmicspiralbiome:nether_spiral"
       }
     },
     "minecraft:the_end": {

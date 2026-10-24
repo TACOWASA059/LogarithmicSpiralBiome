@@ -37,6 +37,7 @@ public class SpiralBiomeSource extends BiomeSource {
     private final String dimension;
     private final SpiralCalculator calculator;
     private final Supplier<List<Holder<Biome>>> sortedBiomes;
+    private final Supplier<List<Holder<Biome>>> landBiomes;
 
     public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config, String dimension) {
         this.biomes = biomes;
@@ -48,6 +49,13 @@ public class SpiralBiomeSource extends BiomeSource {
                 .filter(biome -> boundaryBiome.isEmpty() || !biome.equals(boundaryBiome.get()))
                 .sorted(Comparator.comparing(SpiralBiomeSource::sortKey))
                 .toList());
+        this.landBiomes = Suppliers.memoize(() -> {
+            List<Holder<Biome>> all = this.sortedBiomes.get();
+            List<Holder<Biome>> land = all.stream()
+                    .filter(biome -> !isOceanBiome(biome))
+                    .toList();
+            return land.isEmpty() ? all : land;
+        });
     }
 
     public SpiralBiomeSource(HolderSet<Biome> biomes, Optional<Holder<Biome>> boundaryBiome, SpiralConfig config) {
@@ -107,17 +115,37 @@ public class SpiralBiomeSource extends BiomeSource {
 
     @Override
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
-        List<Holder<Biome>> biomesList = this.sortedBiomes.get();
-        if (biomesList.isEmpty()) {
-            throw new IllegalStateException("Spiral biome source requires at least one biome");
-        }
-
         int blockX = QuartPos.toBlock(quartX);
         int blockZ = QuartPos.toBlock(quartZ);
         if (this.calculator.isBoundary(blockX, blockZ) && this.boundaryBiome.isPresent()) {
             return this.boundaryBiome.get();
         }
+
+        double dx = blockX - this.config.centerX();
+        double dz = blockZ - this.config.centerZ();
+        double distSq = dx * dx + dz * dz;
+        double elevateRadius = SpiralModConfig.getSpawnElevateRadius();
+
+        List<Holder<Biome>> biomesList;
+        if ("overworld".equalsIgnoreCase(this.dimension) && elevateRadius > 0.0D && distSq <= elevateRadius * elevateRadius) {
+            biomesList = this.landBiomes.get();
+        } else {
+            biomesList = this.sortedBiomes.get();
+        }
+
+        if (biomesList.isEmpty()) {
+            throw new IllegalStateException("Spiral biome source requires at least one biome");
+        }
         return biomesList.get(this.calculator.regionIndex(blockX, blockZ, biomesList.size()));
+    }
+
+    private static boolean isOceanBiome(Holder<Biome> biome) {
+        if (biome.is(net.minecraft.tags.BiomeTags.IS_OCEAN)) {
+            return true;
+        }
+        return biome.unwrapKey()
+                .map(key -> key.identifier().getPath().contains("ocean"))
+                .orElse(false);
     }
 
     private static String sortKey(Holder<Biome> biome) {

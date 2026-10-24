@@ -4,7 +4,8 @@
   "package": "com.github.tacowasa059.logarithmicspiralbiome.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "WorldDimensionsMixin"
+    "WorldDimensionsMixin",
+    "NoiseBasedChunkGeneratorMixin"
   ],
   "client": [
     "WorldCreationUiStateMixin"

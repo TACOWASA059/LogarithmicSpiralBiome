@@ -29,6 +29,7 @@ public class SpiralModConfig {
     private static double growth = SpiralConfig.DEFAULT_GROWTH;
     private static double spiralRegionWidth = SpiralConfig.DEFAULT_SPIRAL_REGION_WIDTH;
     private static double crossRegionWidth = SpiralConfig.DEFAULT_CROSS_REGION_WIDTH;
+    private static double spawnElevateRadius = 100.0D;
 
     public static void load() {
         if (!Files.exists(CONFIG_PATH)) {
@@ -92,6 +93,9 @@ public class SpiralModConfig {
                 crossRegionWidth = json.get("cross_region_width").getAsDouble();
                 checkIfCustom();
             }
+            if (json.has("spawn_elevate_radius")) {
+                spawnElevateRadius = json.get("spawn_elevate_radius").getAsDouble();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,7 +126,8 @@ public class SpiralModConfig {
             json.addProperty("growth", growth);
             json.addProperty("spiral_region_width", spiralRegionWidth);
             json.addProperty("cross_region_width", crossRegionWidth);
-            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. overworld_divider_block / nether_divider_block: any block ID (e.g. minecraft:stone, minecraft:sea_lantern, etc). style: standard, large, dense, tight, custom.");
+            json.addProperty("spawn_elevate_radius", spawnElevateRadius);
+            json.addProperty("description", "enable_overworld / enable_nether: true/false. divider_blocks: true/false. wall_height: 0-10. overworld_divider_block / nether_divider_block: any block ID (e.g. minecraft:stone, minecraft:sea_lantern, etc). style: standard, large, dense, tight, custom. spawn_elevate_radius: radius around 0,0 where terrain is elevated above sea level (default 100.0).");
 
             try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
                 GSON.toJson(json, writer);
@@ -239,5 +244,13 @@ public class SpiralModConfig {
 
     public static void setCrossRegionWidth(double value) {
         crossRegionWidth = value;
+    }
+
+    public static double getSpawnElevateRadius() {
+        return spawnElevateRadius;
+    }
+
+    public static void setSpawnElevateRadius(double value) {
+        spawnElevateRadius = Math.max(0.0D, value);
     }
 }
